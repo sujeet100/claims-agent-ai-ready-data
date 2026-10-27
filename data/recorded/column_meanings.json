@@ -1,0 +1,482 @@
+{
+  "77057b579573d9f0": {
+    "columns": [
+      {
+        "column": "product",
+        "description": "The policy product code for the version, such as MOTOR_COMP."
+      }
+    ]
+  },
+  "2eabf6ecc0bbc120": {
+    "columns": [
+      {
+        "column": "resolution_rule",
+        "description": "The rule used to resolve the customer record from duplicate CRM entries."
+      },
+      {
+        "column": "resolution_confidence",
+        "description": "The confidence score for the customer record resolution, with 1.0 indicating the highest confidence."
+      }
+    ]
+  },
+  "3e01eb64dbea086c": {
+    "columns": [
+      {
+        "column": "sha256",
+        "description": "Unique SHA-256 hash of the uploaded document file."
+      },
+      {
+        "column": "pages",
+        "description": "Number of pages in the document."
+      },
+      {
+        "column": "registered_at",
+        "description": "Timestamp when the document was registered in the system."
+      },
+      {
+        "column": "supersedes",
+        "description": "Reference to the prior document version that this upload replaces."
+      }
+    ]
+  },
+  "9b0bb1c8b1579075": {
+    "columns": [
+      {
+        "column": "doc_type",
+        "description": "The document type for the chunk, such as FIR or INVOICE."
+      },
+      {
+        "column": "file_name",
+        "description": "The source file name for the document version that the chunk came from."
+      },
+      {
+        "column": "version",
+        "description": "The version number of the document file represented by the chunk."
+      }
+    ]
+  },
+  "7d4984a01763aaa4": {
+    "columns": [
+      {
+        "column": "address",
+        "description": "The shop's address as recorded in the garage registry."
+      },
+      {
+        "column": "phone_e164",
+        "description": "The shop's phone number in E.164 format."
+      },
+      {
+        "column": "network_status",
+        "description": "The shop's network membership status, such as empanelled."
+      }
+    ]
+  },
+  "2c103c2e74ad6a5f": {
+    "columns": [
+      {
+        "column": "dataset",
+        "description": "The dataset where the held record belongs."
+      },
+      {
+        "column": "record_key",
+        "description": "The key or identifier of the record held at the quality gate."
+      },
+      {
+        "column": "rule",
+        "description": "The quality rule that caused the record to be held."
+      },
+      {
+        "column": "detail",
+        "description": "The message explaining why the record was held."
+      },
+      {
+        "column": "status",
+        "description": "The current quality-gate status of the record."
+      },
+      {
+        "column": "detected_at",
+        "description": "The timestamp when the quality issue was detected."
+      }
+    ]
+  },
+  "009cd6c54b9a55f3": {
+    "columns": [
+      {
+        "column": "mention_id",
+        "description": "Unique identifier for each entity mention record."
+      },
+      {
+        "column": "entity_type",
+        "description": "Type of entity referenced by the mention, such as claim, person, phone, repair shop, or vehicle."
+      },
+      {
+        "column": "raw_value",
+        "description": "Raw text captured for the entity mention as it appears in the source."
+      },
+      {
+        "column": "source",
+        "description": "Source system or document set where the mention was found."
+      },
+      {
+        "column": "locator",
+        "description": "Pointer to the specific record or document location for the mention."
+      },
+      {
+        "column": "claim_id",
+        "description": "Claim identifier associated with the mention."
+      },
+      {
+        "column": "page",
+        "description": "Page number where the mention appears in a document, when available."
+      },
+      {
+        "column": "chunk_id",
+        "description": "Text chunk identifier where the mention appears, when available."
+      },
+      {
+        "column": "method",
+        "description": "How the mention was captured, such as from a record or a document page."
+      },
+      {
+        "column": "gstin_hint",
+        "description": "Hint indicating a possible GSTIN related to the mention, when available."
+      },
+      {
+        "column": "customer_hint",
+        "description": "Hint indicating a possible customer related to the mention, when available."
+      }
+    ]
+  },
+  "8b38b1e5de702527": {
+    "columns": [
+      {
+        "column": "mention_id",
+        "description": "Unique identifier for the mention being resolved."
+      },
+      {
+        "column": "entity_id",
+        "description": "Identifier of the resolved entity for the mention."
+      },
+      {
+        "column": "rule",
+        "description": "Resolution rule used to map the mention to the entity."
+      },
+      {
+        "column": "confidence",
+        "description": "Confidence score for the entity resolution."
+      }
+    ]
+  },
+  "8d16966ee23c4cb2": {
+    "columns": [
+      {
+        "column": "shared_contact_claims_30d",
+        "description": "Count of claims in the past 30 days that share a contact with this claim."
+      },
+      {
+        "column": "shop_claims_30d",
+        "description": "Count of claims in the past 30 days associated with the same repair shop as this claim."
+      },
+      {
+        "column": "contact_phone_not_claimant",
+        "description": "Indicator that the contact phone number does not belong to the claimant."
+      },
+      {
+        "column": "computed_at",
+        "description": "Timestamp when these claim features were computed."
+      }
+    ]
+  },
+  "d0691043332000f2": {
+    "columns": [
+      {
+        "column": "model_version",
+        "description": "The fraud model version used to generate the claim signal values."
+      },
+      {
+        "column": "valid_until",
+        "description": "The date and time until which the versioned claim signals remain valid."
+      },
+      {
+        "column": "inputs",
+        "description": "The input features and values used to compute the claim signals."
+      }
+    ]
+  },
+  "7b518241ae6bdbb4": {
+    "columns": [
+      {
+        "column": "segment",
+        "description": "Insurance segment used to group settled claims for the benchmark distribution."
+      },
+      {
+        "column": "loss_type",
+        "description": "Type of loss used to group settled claims, such as collision or flood."
+      },
+      {
+        "column": "severity_band",
+        "description": "Severity band used to group settled claims into comparable claim size ranges."
+      },
+      {
+        "column": "n",
+        "description": "Number of settled claims included in the benchmark calculation for the group."
+      },
+      {
+        "column": "p10",
+        "description": "10th percentile of approved settlement amounts for the group."
+      },
+      {
+        "column": "p50",
+        "description": "Median approved settlement amount for the group."
+      },
+      {
+        "column": "p90",
+        "description": "90th percentile of approved settlement amounts for the group."
+      },
+      {
+        "column": "computed_at",
+        "description": "Timestamp when these benchmark values were computed."
+      }
+    ]
+  },
+  "4172acf35e49dce0": {
+    "columns": [
+      {
+        "column": "sha256",
+        "description": "SHA-256 hash identifying the uploaded document's file content."
+      },
+      {
+        "column": "pages",
+        "description": "Number of pages in the uploaded document."
+      },
+      {
+        "column": "registered_at",
+        "description": "Date and time when the document was registered in the document register."
+      },
+      {
+        "column": "supersedes",
+        "description": "Reference to the earlier document version that this document supersedes, when applicable."
+      }
+    ]
+  },
+  "04c83a80879a3e43": {
+    "columns": [
+      {
+        "column": "dataset",
+        "description": "Identifies the dataset containing the record that was held for a quality issue."
+      },
+      {
+        "column": "record_key",
+        "description": "Identifies the specific record that was held for review."
+      },
+      {
+        "column": "rule",
+        "description": "States the data quality rule that the record failed."
+      },
+      {
+        "column": "detail",
+        "description": "Provides additional information about the quality issue detected for the record."
+      },
+      {
+        "column": "status",
+        "description": "Shows the current quality-gate disposition of the record, such as held."
+      },
+      {
+        "column": "detected_at",
+        "description": "Records when the quality issue was detected and the record was held."
+      }
+    ]
+  },
+  "6a22e5195fd59ad2": {
+    "columns": [
+      {
+        "column": "shared_contact_claims_30d",
+        "description": "Number of other claims in the previous 30 days that share a contact with this claim."
+      },
+      {
+        "column": "shop_claims_30d",
+        "description": "Number of claims associated with the same shop in the previous 30 days."
+      },
+      {
+        "column": "contact_phone_not_claimant",
+        "description": "Indicator showing whether the contact phone number differs from the claimant’s phone number."
+      },
+      {
+        "column": "computed_at",
+        "description": "Timestamp when the claim features were computed."
+      }
+    ]
+  },
+  "895f2d48203403b6": {
+    "columns": [
+      {
+        "column": "model_version",
+        "description": "Identifies the fraud model and version used to compute the claim signals."
+      },
+      {
+        "column": "valid_until",
+        "description": "Specifies the date and time through which the claim signals remain valid."
+      },
+      {
+        "column": "inputs",
+        "description": "Stores the feature values used to compute the claim signals, including recent claim activity, contact details, policy changes, and policy age."
+      }
+    ]
+  },
+  "91d54b3c5685f108": {
+    "columns": [
+      {
+        "column": "segment",
+        "description": "Segment used to group settled claims in the benchmark."
+      },
+      {
+        "column": "loss_type",
+        "description": "Loss type used to group settled claims in the benchmark."
+      },
+      {
+        "column": "severity_band",
+        "description": "Severity band used to group settled claims in the benchmark."
+      },
+      {
+        "column": "n",
+        "description": "Number of settled claims included in the benchmark group."
+      },
+      {
+        "column": "p10",
+        "description": "10th percentile of approved settlement amounts for the benchmark group."
+      },
+      {
+        "column": "p50",
+        "description": "50th percentile, or median, of approved settlement amounts for the benchmark group."
+      },
+      {
+        "column": "p90",
+        "description": "90th percentile of approved settlement amounts for the benchmark group."
+      },
+      {
+        "column": "computed_at",
+        "description": "Timestamp when the benchmark statistics were computed."
+      }
+    ]
+  },
+  "8e82c2b932ce2fbb": {
+    "columns": [
+      {
+        "column": "sha256",
+        "description": "SHA-256 hash identifying the uploaded document's file content."
+      },
+      {
+        "column": "pages",
+        "description": "Number of pages in the uploaded document."
+      },
+      {
+        "column": "registered_at",
+        "description": "Date and time when the document was registered in the platform."
+      },
+      {
+        "column": "supersedes",
+        "description": "Reference to the earlier document version that this document replaces, when applicable."
+      }
+    ]
+  },
+  "7c0db80a1195bf23": {
+    "columns": [
+      {
+        "column": "dataset",
+        "description": "Identifies the dataset containing the record held by the quality gate."
+      },
+      {
+        "column": "record_key",
+        "description": "Identifies the specific record held by the quality gate."
+      },
+      {
+        "column": "rule",
+        "description": "States the data quality rule that caused the record to be held."
+      },
+      {
+        "column": "detail",
+        "description": "Provides additional information about the quality issue identified for the record."
+      },
+      {
+        "column": "status",
+        "description": "Shows the current quality-gate status of the record."
+      },
+      {
+        "column": "detected_at",
+        "description": "Records the timestamp when the quality issue was detected."
+      }
+    ]
+  },
+  "c647978ac9398dd4": {
+    "columns": [
+      {
+        "column": "shared_contact_claims_30d",
+        "description": "Number of other claims in the 30-day period that share a contact with this claim."
+      },
+      {
+        "column": "shop_claims_30d",
+        "description": "Number of claims associated with the same shop in the 30-day period."
+      },
+      {
+        "column": "contact_phone_not_claimant",
+        "description": "Indicator that the contact phone number does not match the claimant's phone number."
+      },
+      {
+        "column": "computed_at",
+        "description": "Timestamp when the claim features were computed."
+      }
+    ]
+  },
+  "6ce94f0258ee2090": {
+    "columns": [
+      {
+        "column": "model_version",
+        "description": "Identifies the version of the model used to calculate the claim signals."
+      },
+      {
+        "column": "valid_until",
+        "description": "Shows the date and time through which the claim signals are valid."
+      },
+      {
+        "column": "inputs",
+        "description": "Contains the input feature values used to calculate the claim signals."
+      }
+    ]
+  },
+  "f5121b137f7ce0af": {
+    "columns": [
+      {
+        "column": "segment",
+        "description": "Business segment associated with the settled claims included in the benchmark."
+      },
+      {
+        "column": "loss_type",
+        "description": "Type of loss associated with the settled claims included in the benchmark."
+      },
+      {
+        "column": "severity_band",
+        "description": "Severity category assigned to the settled claims included in the benchmark."
+      },
+      {
+        "column": "n",
+        "description": "Number of settled claims used to calculate the amount distribution for the segment, loss type, and severity band."
+      },
+      {
+        "column": "p10",
+        "description": "10th percentile of approved settlement amounts for the segment, loss type, and severity band."
+      },
+      {
+        "column": "p50",
+        "description": "50th percentile, or median, of approved settlement amounts for the segment, loss type, and severity band."
+      },
+      {
+        "column": "p90",
+        "description": "90th percentile of approved settlement amounts for the segment, loss type, and severity band."
+      },
+      {
+        "column": "computed_at",
+        "description": "Timestamp when the benchmark statistics were calculated."
+      }
+    ]
+  }
+}

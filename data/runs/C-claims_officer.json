@@ -1,0 +1,347 @@
+{
+  "stage": "C",
+  "role": "claims_officer",
+  "model": "openai:gpt-5.6-luna",
+  "prompt": "Assess claim #CLM-88421, a ₹4.2L car-collision claim filed yesterday. Should we fast-track settlement, and at what amount? And flag anything suspicious.",
+  "run_id": "310f9f8b",
+  "seconds": 34.3,
+  "tools_available": [
+    "get_policy_status",
+    "list_datasets",
+    "query_lakehouse",
+    "get_policy_terms",
+    "list_claim_documents",
+    "search_catalog",
+    "define_term",
+    "search_documents",
+    "submit_decision"
+  ],
+  "assessment": {
+    "decision": "hold_and_route_to_investigation",
+    "recommended_amount_inr": null,
+    "settlement_range_inr": [
+      407500,
+      407500
+    ],
+    "policy_terms_used": "P-2231 version 1 in force on loss date 2026-10-12; zero-depreciation was not in force and deductible was Rs. 2,500. Version 2 added zero-depreciation by endorsement END-5512 on 2026-10-13, after the loss. Source: get_policy_terms(P-2231, 2026-10-12).",
+    "zero_dep_applies": false,
+    "severity_reading": "B2 — major repair involving structural damage or airbag deployment, per the owned Severity Band definition and the survey report. Source: survey_report_SV118.pdf, p.1; define_term(Severity Band).",
+    "fraud_score": null,
+    "linked_claims": [
+      "CLM-61090"
+    ],
+    "red_flags": [
+      "Post-loss endorsement: zero-depreciation was added on 2026-10-13 after the 2026-10-12 accident and before filing on 2026-10-14; investigate timing and intent.",
+      "CLM-61090 used the same normalized contact phone (9822017643 / +91 98220 17643) and the same repairer, FixIt Motors, within 30 days; this is a linked-claim pattern, not proof of fraud.",
+      "A fraud score could not be obtained: the catalog identified a fraud-score signal/API, but no callable fraud-score tool or queryable gold feature table was available. Benchmark data likewise could not be queried."
+    ],
+    "evidence": [
+      {
+        "source": "silver.claims, CLM-88421",
+        "detail": "Loss date 2026-10-12; filed 2026-10-14; requested Rs. 420,000; assessed Rs. 410,000; collision; vehicle MH12AB4321; severity band B2; status OPEN."
+      },
+      {
+        "source": "get_policy_terms(P-2231, 2026-10-12)",
+        "detail": "Version 1 was in force on the loss date, with zero-depreciation false and Rs. 2,500 deductible; endorsement END-5512 made zero-depreciation true only from 2026-10-13."
+      },
+      {
+        "source": "fir-copy-88421.pdf, p.1-2",
+        "detail": "FIR records the 2026-10-12 collision at Magarpatta junction involving MH12AB4321, no injuries, and contact +91 98220 17643; the vehicle was not driveable."
+      },
+      {
+        "source": "survey_report_SV118.pdf, p.1",
+        "detail": "Survey confirms frontal impact consistent with the FIR, B2 major repair, and assessed loss Rs. 410,000."
+      },
+      {
+        "source": "IMG_4417.pdf, p.1",
+        "detail": "Latest invoice from FixIt Motors totals Rs. 420,000 including GST; parts Rs. 285,600, labour Rs. 92,400, paint/consumables Rs. 42,000."
+      },
+      {
+        "source": "inv/bill documents for CLM-61090, search_documents results",
+        "detail": "CLM-61090's 2026-09-29 FIR uses contact 9822017643 and its invoice identifies FIXIT MOTORS PVT. LTD.; both are within 30 days of this loss."
+      },
+      {
+        "source": "submit_decision result",
+        "detail": "Decision recorded as hold_and_route_to_investigation."
+      }
+    ],
+    "summary": "Do not fast-track this claim because the policy acquired zero-depreciation only after the loss, and a linked-claim pattern exists with CLM-61090 through the same normalized contact phone and repairer. The collision itself is supported by the FIR, latest invoice, and survey, with B2 severity and Rs. 410,000 assessed loss. If investigation confirms coverage and no further issue, the indicated amount is Rs. 407,500 (Rs. 410,000 less the Rs. 2,500 deductible); no payment is recommended while held."
+  },
+  "decisions": [
+    {
+      "claim_id": "CLM-88421",
+      "decision": "hold_and_route_to_investigation",
+      "action": "route_to_investigation",
+      "amount_inr": null,
+      "rationale": "Do not fast-track: policy version 2 added zero-depreciation only on 2026-10-13, after the 2026-10-12 loss, and the claim shares the same normalized contact phone and FixIt Motors repairer with CLM-61090 within 30 days. The collision evidence is otherwise consistent; if coverage is confirmed after investigation, the assessed Rs. 410,000 less the Rs. 2,500 deductible indicates Rs. 407,500 before any policy-applicable adjustments.",
+      "allowed": true,
+      "status": "done",
+      "reason": "route_to_investigation recorded"
+    }
+  ],
+  "trace": [
+    {
+      "step": 1,
+      "tool": "search_catalog",
+      "args": {
+        "query": "claim facts loss date policy number claimed amount approved amount damage severity fraud score linked claims collision"
+      },
+      "backend": "Discovery index · Qdrant",
+      "ms": 13,
+      "masked": 0,
+      "error": null,
+      "output": "[{\"kind\": \"dataset\", \"name\": \"silver.claims\", \"route_to_tool\": \"query_lakehouse\", \"text\": \"Dataset silver.claims (owner Claims Operations). One row per claim across the claims DB and the regional tracker, with one claim ID, ISO dates and the three amounts kept apart. Columns: claim_id: Canonical claim ID; filed_date: Date the claim was reported to the insurer.; loss_date: Date of the accident. Use this to pick the policy version.; policy_id: Policy the claim is made under.; customer_key: Resolved person key (one key across CRM duplicates).; requested_amount: Amount the claimant asks for.; approved_amount: Amount approved after assessment; empty while open.; paid_amount: Amount disbu\", \"score\": 0.757}, {\"kind\": \"dataset\", \"name\": \"gold.claim_features\", \"route_to_tool\": \"query_lakehouse\", \"text\": \"Dataset gold.claim_features (owner Fraud Analytics). Per-claim features for the fraud model, including features computed over the knowledge graph. Columns: claim_id: Claim.; post_loss_endorsement: 1 if the policy was endorsed between loss date and filing.; policy_age_days: Days from policy issue to the loss date.; shared_contact_claims_30d: Number of other claims in the 30-day period that share a contact with this claim.; shop_claims_30d: Number of claims associated with the same shop in the 30-day period.; contact_phone_not_claimant: Indicator that the contact phone number does not match the \", \"score\": 0.737}, {\"kind\": \"api\", \"name\": \"fraud_score_live\", \"route_to_tool\": null, \"text\": \"API /api/source/fraud-score/{claim_id} from Fraud Engine: Recomputes a fraud score from raw tables on every call. Has no access to graph features.\", \"score\": 0.734}, {\"kind\": \"term\", \"name\": \"Linked Claims\", \"route_to_tool\": \"define_term\", \"text\": \"Business term Linked Claims (owner Fraud Analytics): Claims that share a repair shop, contact phone, vehicle or person with another claim within 30 days. A pattern to investigate, not proof of fraud. Also called: \", \"score\": 0.696}, {\"kind\": \"dataset\", \"name\": \"gold.settlement_benchmarks\", \"route_to_tool\": \"query_lakehouse\", \"text\": \"Dataset gold.settlement_benchmarks (owner Claims Finance). Distribution of approved amounts for settled claims by segment, loss type and severity band. Columns: segment: Business segment associated with the settled claims included in the benchmark.; loss_type: Type of loss associated with the settled claims included in the benchmark.; severity_band: Severity category assigned to the settled claims included in the benchmark.; n: Number of settled claims used to calculate the amount distribution for the segment, loss type, and severity band.; p10: 10th percentile of approved settlement amounts f\", \"score\": 0.688}, {\"kind\": \"signal\", \"name\": \"fraud_score\", \"route_to_tool\": null, \"text\": \"Signal fraud_score v3.2 (owner Fraud Analytics): Probability-like fraud score per claim from the fraud model, using tabular and graph features.\", \"score\": 0.674}]"
+    },
+    {
+      "step": 2,
+      "tool": "list_claim_documents",
+      "args": {
+        "claim_id": "CLM-88421"
+      },
+      "backend": "Lakehouse · silver.documents",
+      "ms": 50,
+      "masked": 0,
+      "error": null,
+      "output": "[{\"doc_id\": \"DOC-9439D4E3\", \"file_name\": \"fir-copy-88421.pdf\", \"doc_type\": \"FIR\", \"version\": 1, \"is_latest\": true, \"owner\": \"Claims Operations\", \"pages\": 2}, {\"doc_id\": \"DOC-54395BE9\", \"file_name\": \"invoice_88421.pdf\", \"doc_type\": \"INVOICE\", \"version\": 1, \"is_latest\": false, \"owner\": \"Claims Operations\", \"pages\": 1}, {\"doc_id\": \"DOC-4E14D7A2\", \"file_name\": \"IMG_4417.pdf\", \"doc_type\": \"INVOICE\", \"version\": 2, \"is_latest\": true, \"owner\": \"Claims Operations\", \"pages\": 1}, {\"doc_id\": \"DOC-B87D2451\", \"file_name\": \"survey_report_SV118.pdf\", \"doc_type\": \"SURVEY\", \"version\": 1, \"is_latest\": true, \"owner\": \"Claims Operations\", \"pages\": 1}]"
+    },
+    {
+      "step": 3,
+      "tool": "list_datasets",
+      "args": {},
+      "backend": "Lakehouse · Iceberg + DuckDB",
+      "ms": 53,
+      "masked": 0,
+      "error": null,
+      "output": "[{\"dataset\": \"silver.claims\", \"columns\": {\"claim_id\": \"Canonical claim ID\", \"filed_date\": \"Date the claim was reported to the insurer.\", \"loss_date\": \"Date of the accident. Use this to pick the policy version.\", \"policy_id\": \"Policy the claim is made under.\", \"customer_key\": \"Resolved person key (one key across CRM duplicates).\", \"requested_amount\": \"Amount the claimant asks for.\", \"approved_amount\": \"Amount approved after assessment; empty while open.\", \"paid_amount\": \"Amount disbursed; empty until paid.\", \"assessed_amount\": \"Surveyor's assessed loss.\", \"status\": \"OPEN\", \"severity_band\": \"Surveyor band B1-B4 (B1 total loss\", \"severity_code_legacy\": \"Legacy intake code 1-5 from the claims DB. Do not use for decisions.\", \"loss_type\": \"COLL collision\", \"vehicle_reg\": \"Vehicle registration number.\", \"sources\": \"Source systems that hold this claim.\"}, \"description\": \"One row per claim across the claims DB and the regional tracker, with one claim ID, ISO dates and the three amounts kept apart.\"}, {\"dataset\": \"silver.policy_versions\", \"columns\": {\"policy_id\": \"Policy number.\", \"version\": \"Version number\", \"valid_from\": \"Start of this version's validity (inclusive).\", \"valid_to\": \"End of validity (exclusive); empty for the current version.\", \"change_type\": \"ISSUE\", \"endorsement_id\": \"Endorsement reference when the version came from an endorsement.\", \"holder_customer_key\": \"Resolved person key of the policy holder.\", \"product\": \"The policy product code for the version, such as MOTOR_COMP.\", \"vehicle_reg\": \"Insured vehicle registration.\", \"make_model\": \"Vehicle make and model.\", \"segment\": \"Vehicle segment SUV\", \"idv\": \"Insured declared value in rupees.\", \"zero_dep\": \"Whether the zero-depreciation add-on is in force in this version.\", \"deductible\": \"Compulsory deductible in rupees.\", \"term_start\": \"Policy term start date.\", \"term_end\": \"Policy term end date.\", \"status\": \"ACTIVE or LAPSED.\"}, \"description\": \"Every version of every policy, rebuilt from the policy admin audit log, so terms can be read as of any date.\"}, {\"dataset\": \"silver.customers\", \"columns\": {\"customer_key\": \"Resolved person key.\", \"full_name\": \"Best full name across source records.\", \"dob\": \"Date of birth.\", \"phone_e164\": \"Phone in E.164 form.\", \"email\": \"Email address.\", \"city\": \"City of residence.\", \"source_ids\": \"CRM records resolved into this person.\", \"resolution_rule\": \"The rule used to resolve the customer record from duplicate CRM entries.\", \"resolution_confidence\": \"The confidence score for the customer record resolution, with 1.0 indicating the highest confidence.\"}, \"description\": \"One row per real person, resolved across duplicate CRM records by phone, date of birth and name.\"}, {\"dataset\": \"silver.documents\", \"columns\": {\"doc_id\": \"Document ID.\", \"file_name\": \"File name as uploaded.\", \"doc_type\": \"FIR\", \"claim_id\": \"Claim the document belongs to\", \"sha256\": \"SHA-256 hash identifying the uploaded document's file content.\", \"pages\": \"Number of pages in the uploaded document.\", \"owner\": \"Accountable team.\", \"registered_at\": \"Date and time when the document was registered in the platform.\", \"version\": \"Version within claim and type.\", \"is_latest\": \"Whether this is the latest version.\", \"supersedes\": \"Reference to the earlier document version that this document replaces, when applicable.\"}, \"description\": \"Register of every uploaded document with its claim, type, version and owner. The superseded invoice is kept but not latest.\"}, {\"dataset\": \"silver.repair_shops\", \"columns\": {\"shop_id\": \"GSTIN of the shop.\", \"name\": \"Registered name.\", \"address\": \"The shop's address as recorded in the garage registry.\", \"city\": \"City.\", \"phone_e164\": \"The shop's phone number in E.164 format.\", \"network_status\": \"The shop's network membership status, such as empanelled.\"}, \"description\": \"Empanelled repair shops from the garage registry, keyed by GSTIN.\"}, {\"dataset\": \"silver.quality_events\", \"columns\": {\"dataset\": \"Identifies the dataset containing the record held by the quality gate.\", \"record_key\": \"Identifies the specific record held by the quality gate.\", \"rule\": \"States the data quality rule that caused the record to be held.\", \"detail\": \"Provides additional information about the quality issue identified for the record.\", \"status\": \"Shows the current quality-gate status of the record.\", \"detected_at\": \"Records the timestamp when the quality issue was detected.\"}, \"description\": \"Records held at a quality gate, with the rule that held them.\"}, {\"dataset\": \"meta.datasets\", \"columns\": {\"dataset\": \"\", \"owner\": \"\", \"description\": \"\", \"upstream\": \"\", \"materialized\": \"\"}, \"description\": \"\"}, {\"dataset\": \"meta.columns\", \"columns\": {\"dataset\": \"\", \"column\": \"\", \"description\": \"\", \"term\": \"\", \"classification\": \"\", \"source\": \"\", \"review_status\": \"\"}, \"description\": \"\"}, {\"dataset\": \"meta.glossary\", \"columns\": {\"term\": \"\", \"owner\": \"\", \"definition\": \"\", \"synonyms\": \"\"}, \"description\": \"\"}, {\"dataset\": \"silver.document_chunks\", \"columns\": {\"chunk_id\": \"Chunk ID.\", \"doc_id\": \"Source document.\", \"claim_id\": \"Claim the document belongs to.\", \"doc_type\": \"The document type for the chunk, such as FIR or INVOICE.\", \"file_name\": \"The source file name for the document version that the chunk came from.\", \"page\": \"Page number in the source PDF.\", \"section\": \"Section heading the chunk came from.\", \"version\": \"The version number of the document file represented by the chunk.\", \"text\": \"Chunk text. May contain names and phone numbers.\"}, \"description\": \"Section-aware chunks of every latest document, with document, page and section for citation.\"}]"
+    },
+    {
+      "step": 4,
+      "tool": "query_lakehouse",
+      "args": {
+        "sql": "SELECT * FROM silver.claims WHERE claim_id = 'CLM-88421'"
+      },
+      "backend": "Lakehouse · Iceberg + DuckDB",
+      "ms": 2,
+      "masked": 0,
+      "error": null,
+      "output": "{\"rows\": [{\"claim_id\": \"CLM-88421\", \"filed_date\": \"2026-10-14T00:00:00\", \"loss_date\": \"2026-10-12T00:00:00\", \"policy_id\": \"P-2231\", \"customer_key\": \"PER-4E7AE6\", \"requested_amount\": 420000.0, \"approved_amount\": null, \"paid_amount\": null, \"assessed_amount\": 410000.0, \"status\": \"OPEN\", \"severity_band\": \"B2\", \"severity_code_legacy\": 3, \"loss_type\": \"COLL\", \"vehicle_reg\": \"MH12AB4321\", \"sources\": \"claims_db,regional_tracker\"}], \"row_count\": 1, \"governed\": false}"
+    },
+    {
+      "step": 5,
+      "tool": "query_lakehouse",
+      "args": {
+        "sql": "SELECT * FROM gold.settlement_benchmarks WHERE segment = 'SUV' AND loss_type = 'COLL'"
+      },
+      "backend": "Lakehouse · Iceberg + DuckDB",
+      "ms": 4,
+      "masked": 0,
+      "error": "Catalog Error: Table with name settlement_benchmarks does not exist!\nDid you mean \"main.sqlite_temp_schema\"?\n\nLINE 1: SELECT * FROM gold.settlement_benchmarks WHERE segment = 'SUV' AND loss_type...\n                      ^^^^^^^^^^^^^^^^^^^^^^^^^^",
+      "output": "{\"error\": \"CatalogException: Catalog Error: Table with name settlement_benchmarks does not exist!\\nDid you mean \\\"main.sqlite_temp_schema\\\"?\\n\\nLINE 1: SELECT * FROM gold.settlement_benchmarks WHERE segment = 'SUV' AND loss_type...\\n                      ^^^^^^^^^^^^^^^^^^^^^^^^^^\"}"
+    },
+    {
+      "step": 6,
+      "tool": "query_lakehouse",
+      "args": {
+        "sql": "SELECT * FROM gold.claim_features WHERE claim_id = 'CLM-88421'"
+      },
+      "backend": "Lakehouse · Iceberg + DuckDB",
+      "ms": 4,
+      "masked": 0,
+      "error": "Catalog Error: Table with name claim_features does not exist!\nDid you mean \"silver.claims\"?\n\nLINE 1: SELECT * FROM gold.claim_features WHERE claim_id = 'CLM-88421'\n                      ^^^^^^^^^^^^^^^^^^^",
+      "output": "{\"error\": \"CatalogException: Catalog Error: Table with name claim_features does not exist!\\nDid you mean \\\"silver.claims\\\"?\\n\\nLINE 1: SELECT * FROM gold.claim_features WHERE claim_id = 'CLM-88421'\\n                      ^^^^^^^^^^^^^^^^^^^\"}"
+    },
+    {
+      "step": 7,
+      "tool": "search_documents",
+      "args": {
+        "query": "FIR accident circumstances date time location driver collision; invoice parts labour taxes total and prior/superseded amount; survey assessed damage severity causation",
+        "claim_id": "CLM-88421",
+        "limit": 8
+      },
+      "backend": "Vector index · Qdrant",
+      "ms": 9,
+      "masked": 0,
+      "error": null,
+      "output": "[{\"cite\": \"fir-copy-88421.pdf · page 2 · Statement of complainant\", \"doc_id\": \"DOC-9439D4E3\", \"chunk_id\": \"DOC-9439D4E3-p2\", \"claim_id\": \"CLM-88421\", \"doc_type\": \"FIR\", \"text\": \"[FIR · CLM-88421 · fir-copy-88421.pdf · page 2 · Statement of complainant]\\nSTATEMENT OF COMPLAINANT\\nFIR No. 1512/2026 - continued\\nI, Arjun Malhotra, state that on the above date my vehicle MH12AB4321 was hit by a car reversing out of\\na lane near Magarpatta junction. The front grille, airbag module and bonnet were damaged. The other\\nvehicle did not stop.\\nThe vehicle was not driveable and was later taken to FixIt Motors for repair. I have informed my insurer\\nand will submit the repair estimate and invoice.\\nContact No.: +91 98220 17643\\nThe above statement has been read over to me and is correct.\", \"score\": 0.717}, {\"cite\": \"survey_report_SV118.pdf · page 1 · Survey findings\", \"doc_id\": \"DOC-B87D2451\", \"chunk_id\": \"DOC-B87D2451-p1\", \"claim_id\": \"CLM-88421\", \"doc_type\": \"SURVEY\", \"text\": \"[SURVEY · CLM-88421 · survey_report_SV118.pdf · page 1 · Survey findings]\\nMOTOR SURVEY REPORT\\nSurveyor: S. Kulkarni (Licence SLA-44817)\\nInsurance claim ref: CLM-88421\\nVehicle: MH12AB4321  (Hyundai Creta)\\nInspected on: 14-10-2026\\nSeverity band: B2 (major repair: structural damage, airbag deployed)\\nAssessed loss: Rs. 410,000\\nObservations: frontal impact consistent with the narrative in the FIR. Radiator support, bonnet and front\\ncross member require replacement. Vehicle inspected at the repairer's premises.\", \"score\": 0.705}, {\"cite\": \"IMG_4417.pdf · page 1 · Repair invoice\", \"doc_id\": \"DOC-4E14D7A2\", \"chunk_id\": \"DOC-4E14D7A2-p1\", \"claim_id\": \"CLM-88421\", \"doc_type\": \"INVOICE\", \"text\": \"[INVOICE · CLM-88421 · IMG_4417.pdf · page 1 · Repair invoice]\\nFIXIT MOTORS\\nPlot 14, Hadapsar Industrial Estate, Pune  |  Tel +91 20 26871100\\nGSTIN: 27AAFCF4821K1Z3\\nTax invoice no.: INV/2610/843-R1\\nInvoice date: 14-10-2026\\nCustomer: Arjun Malhotra\\nVehicle: MH12AB4321  (Hyundai Creta)\\nInsurance claim ref: CLM-88421\\nDescription Amount\\nParts (metal, plastic, glass) Rs. 285,600\\nLabour Rs. 92,400\\nPaint and consumables Rs. 42,000\\nTotal (incl. GST) Rs. 420,000\", \"score\": 0.697}, {\"cite\": \"fir-copy-88421.pdf · page 1 · Incident details\", \"doc_id\": \"DOC-9439D4E3\", \"chunk_id\": \"DOC-9439D4E3-p1\", \"claim_id\": \"CLM-88421\", \"doc_type\": \"FIR\", \"text\": \"[FIR · CLM-88421 · fir-copy-88421.pdf · page 1 · Incident details]\\nFIRST INFORMATION REPORT\\nPolice Station: Hadapsar, Pune City\\nFIR No.: 1512/2026\\nDate of report: 12-10-2026\\nDate of occurrence: 12-10-2026, approx. 16:55 hrs\\nPlace of occurrence: Magarpatta junction\\nComplainant: Arjun Malhotra\\nVehicle Reg. No.: MH12AB4321\\nVehicle make/model: Hyundai Creta\\nInsurance claim ref: CLM-88421\\nNature of offence: road accident involving damage to property. No injuries reported. Sections as\\napplicable under the Motor Vehicles Act.\", \"score\": 0.683}]"
+    },
+    {
+      "step": 8,
+      "tool": "query_lakehouse",
+      "args": {
+        "sql": "SELECT * FROM silver.quality_events WHERE record_key = 'CLM-88421' OR record_key LIKE '%88421%'"
+      },
+      "backend": "Lakehouse · Iceberg + DuckDB",
+      "ms": 3,
+      "masked": 0,
+      "error": null,
+      "output": "{\"rows\": [], \"row_count\": 0, \"governed\": false}"
+    },
+    {
+      "step": 9,
+      "tool": "query_lakehouse",
+      "args": {
+        "sql": "SELECT claim_id, filed_date, loss_date, policy_id, customer_key, requested_amount, approved_amount, assessed_amount, status, severity_band, loss_type, vehicle_reg FROM silver.claims WHERE claim_id <> 'CLM-88421' AND (customer_key = 'PER-4E7AE6' OR vehicle_reg = 'MH12AB4321') AND loss_date >= '2026-09-12' AND loss_date <= '2026-11-11'"
+      },
+      "backend": "Lakehouse · Iceberg + DuckDB",
+      "ms": 4,
+      "masked": 0,
+      "error": null,
+      "output": "{\"rows\": [], \"row_count\": 0, \"governed\": false}"
+    },
+    {
+      "step": 10,
+      "tool": "get_policy_terms",
+      "args": {
+        "policy_id": "P-2231",
+        "as_of_date": "2026-10-12"
+      },
+      "backend": "Lakehouse · silver.policy_versions",
+      "ms": 9,
+      "masked": 0,
+      "error": null,
+      "output": "{\"policy_id\": \"P-2231\", \"as_of_date\": \"2026-10-12\", \"summary\": \"On 2026-10-12 version 1 was in force: zero-depreciation add-on NOT in force, deductible Rs 2,500. Changed on 2026-10-13 (ENDORSE END-5512): zero_dep=True.\", \"in_force\": {\"policy_id\": \"P-2231\", \"version\": 1, \"valid_from\": \"2025-11-02T11:00:00\", \"valid_to\": \"2026-10-13T10:42:00\", \"change_type\": \"ISSUE\", \"endorsement_id\": null, \"product\": \"MOTOR_COMP\", \"make_model\": \"Hyundai Creta\", \"vehicle_reg\": \"MH12AB4321\", \"segment\": \"SUV\", \"idv\": 1120000.0, \"zero_dep\": false, \"deductible\": 2500.0, \"term_start\": \"2025-11-02T00:00:00\", \"term_end\": \"2026-11-01T00:00:00\", \"status\": \"ACTIVE\"}, \"changes_after\": [{\"version\": 2, \"valid_from\": \"2026-10-13T10:42:00\", \"change_type\": \"ENDORSE\", \"endorsement_id\": \"END-5512\", \"zero_dep\": true, \"deductible\": 2500.0}]}"
+    },
+    {
+      "step": 11,
+      "tool": "search_catalog",
+      "args": {
+        "query": "fraud score for claim CLM-88421 linked claims shared repair shop phone vehicle person"
+      },
+      "backend": "Discovery index · Qdrant",
+      "ms": 10,
+      "masked": 0,
+      "error": null,
+      "output": "[{\"kind\": \"term\", \"name\": \"Linked Claims\", \"route_to_tool\": \"define_term\", \"text\": \"Business term Linked Claims (owner Fraud Analytics): Claims that share a repair shop, contact phone, vehicle or person with another claim within 30 days. A pattern to investigate, not proof of fraud. Also called: \", \"score\": 0.698}, {\"kind\": \"api\", \"name\": \"fraud_score_live\", \"route_to_tool\": null, \"text\": \"API /api/source/fraud-score/{claim_id} from Fraud Engine: Recomputes a fraud score from raw tables on every call. Has no access to graph features.\", \"score\": 0.693}, {\"kind\": \"signal\", \"name\": \"fraud_score\", \"route_to_tool\": null, \"text\": \"Signal fraud_score v3.2 (owner Fraud Analytics): Probability-like fraud score per claim from the fraud model, using tabular and graph features.\", \"score\": 0.685}, {\"kind\": \"dataset\", \"name\": \"gold.claim_features\", \"route_to_tool\": \"query_lakehouse\", \"text\": \"Dataset gold.claim_features (owner Fraud Analytics). Per-claim features for the fraud model, including features computed over the knowledge graph. Columns: claim_id: Claim.; post_loss_endorsement: 1 if the policy was endorsed between loss date and filing.; policy_age_days: Days from policy issue to the loss date.; shared_contact_claims_30d: Number of other claims in the 30-day period that share a contact with this claim.; shop_claims_30d: Number of claims associated with the same shop in the 30-day period.; contact_phone_not_claimant: Indicator that the contact phone number does not match the \", \"score\": 0.674}, {\"kind\": \"dataset\", \"name\": \"silver.claims\", \"route_to_tool\": \"query_lakehouse\", \"text\": \"Dataset silver.claims (owner Claims Operations). One row per claim across the claims DB and the regional tracker, with one claim ID, ISO dates and the three amounts kept apart. Columns: claim_id: Canonical claim ID; filed_date: Date the claim was reported to the insurer.; loss_date: Date of the accident. Use this to pick the policy version.; policy_id: Policy the claim is made under.; customer_key: Resolved person key (one key across CRM duplicates).; requested_amount: Amount the claimant asks for.; approved_amount: Amount approved after assessment; empty while open.; paid_amount: Amount disbu\", \"score\": 0.672}, {\"kind\": \"term\", \"name\": \"Fraud Score\", \"route_to_tool\": \"define_term\", \"text\": \"Business term Fraud Score (owner Fraud Analytics): Probability-like score in [0,1] from the fraud model, computed once per claim and versioned. 0.50 or above routes the claim to investigators. Also called: \", \"score\": 0.666}]"
+    },
+    {
+      "step": 12,
+      "tool": "define_term",
+      "args": {
+        "term": "severity band"
+      },
+      "backend": "Catalog · glossary",
+      "ms": 11,
+      "masked": 0,
+      "error": null,
+      "output": "[{\"term\": \"Severity Band\", \"owner\": \"Motor Claims Engineering\", \"definition\": \"The surveyor's assessment of damage, on the band scale B1-B4 where a LOWER number is MORE severe. B1 = total loss, B2 = major repair (structural damage or airbag deployment), B3 = moderate repair, B4 = minor repair. This is the only severity used for decisions. The legacy claims-system code (1-5, 5 worst) and the regional tracker's Low/Med/High are intake guesses and map to bands only approximately.\", \"synonyms\": \"severity,sev_band,damage band\"}]"
+    },
+    {
+      "step": 13,
+      "tool": "define_term",
+      "args": {
+        "term": "Fraud Score"
+      },
+      "backend": "Catalog · glossary",
+      "ms": 7,
+      "masked": 0,
+      "error": null,
+      "output": "[{\"term\": \"Fraud Score\", \"owner\": \"Fraud Analytics\", \"definition\": \"Probability-like score in [0,1] from the fraud model, computed once per claim and versioned. 0.50 or above routes the claim to investigators.\", \"synonyms\": \"\"}]"
+    },
+    {
+      "step": 14,
+      "tool": "search_documents",
+      "args": {
+        "query": "documents indicating post-loss policy endorsement, zero depreciation request, altered or backdated claim evidence for CLM-88421",
+        "claim_id": "CLM-88421",
+        "limit": 5
+      },
+      "backend": "Vector index · Qdrant",
+      "ms": 10,
+      "masked": 0,
+      "error": null,
+      "output": "[{\"cite\": \"survey_report_SV118.pdf · page 1 · Survey findings\", \"doc_id\": \"DOC-B87D2451\", \"chunk_id\": \"DOC-B87D2451-p1\", \"claim_id\": \"CLM-88421\", \"doc_type\": \"SURVEY\", \"text\": \"[SURVEY · CLM-88421 · survey_report_SV118.pdf · page 1 · Survey findings]\\nMOTOR SURVEY REPORT\\nSurveyor: S. Kulkarni (Licence SLA-44817)\\nInsurance claim ref: CLM-88421\\nVehicle: MH12AB4321  (Hyundai Creta)\\nInspected on: 14-10-2026\\nSeverity band: B2 (major repair: structural damage, airbag deployed)\\nAssessed loss: Rs. 410,000\\nObservations: frontal impact consistent with the narrative in the FIR. Radiator support, bonnet and front\\ncross member require replacement. Vehicle inspected at the repairer's premises.\", \"score\": 0.704}, {\"cite\": \"IMG_4417.pdf · page 1 · Repair invoice\", \"doc_id\": \"DOC-4E14D7A2\", \"chunk_id\": \"DOC-4E14D7A2-p1\", \"claim_id\": \"CLM-88421\", \"doc_type\": \"INVOICE\", \"text\": \"[INVOICE · CLM-88421 · IMG_4417.pdf · page 1 · Repair invoice]\\nFIXIT MOTORS\\nPlot 14, Hadapsar Industrial Estate, Pune  |  Tel +91 20 26871100\\nGSTIN: 27AAFCF4821K1Z3\\nTax invoice no.: INV/2610/843-R1\\nInvoice date: 14-10-2026\\nCustomer: Arjun Malhotra\\nVehicle: MH12AB4321  (Hyundai Creta)\\nInsurance claim ref: CLM-88421\\nDescription Amount\\nParts (metal, plastic, glass) Rs. 285,600\\nLabour Rs. 92,400\\nPaint and consumables Rs. 42,000\\nTotal (incl. GST) Rs. 420,000\", \"score\": 0.688}, {\"cite\": \"fir-copy-88421.pdf · page 2 · Statement of complainant\", \"doc_id\": \"DOC-9439D4E3\", \"chunk_id\": \"DOC-9439D4E3-p2\", \"claim_id\": \"CLM-88421\", \"doc_type\": \"FIR\", \"text\": \"[FIR · CLM-88421 · fir-copy-88421.pdf · page 2 · Statement of complainant]\\nSTATEMENT OF COMPLAINANT\\nFIR No. 1512/2026 - continued\\nI, Arjun Malhotra, state that on the above date my vehicle MH12AB4321 was hit by a car reversing out of\\na lane near Magarpatta junction. The front grille, airbag module and bonnet were damaged. The other\\nvehicle did not stop.\\nThe vehicle was not driveable and was later taken to FixIt Motors for repair. I have informed my insurer\\nand will submit the repair estimate and invoice.\\nContact No.: +91 98220 17643\\nThe above statement has been read over to me and is correct.\", \"score\": 0.656}, {\"cite\": \"fir-copy-88421.pdf · page 1 · Incident details\", \"doc_id\": \"DOC-9439D4E3\", \"chunk_id\": \"DOC-9439D4E3-p1\", \"claim_id\": \"CLM-88421\", \"doc_type\": \"FIR\", \"text\": \"[FIR · CLM-88421 · fir-copy-88421.pdf · page 1 · Incident details]\\nFIRST INFORMATION REPORT\\nPolice Station: Hadapsar, Pune City\\nFIR No.: 1512/2026\\nDate of report: 12-10-2026\\nDate of occurrence: 12-10-2026, approx. 16:55 hrs\\nPlace of occurrence: Magarpatta junction\\nComplainant: Arjun Malhotra\\nVehicle Reg. No.: MH12AB4321\\nVehicle make/model: Hyundai Creta\\nInsurance claim ref: CLM-88421\\nNature of offence: road accident involving damage to property. No injuries reported. Sections as\\napplicable under the Motor Vehicles Act.\", \"score\": 0.638}]"
+    },
+    {
+      "step": 15,
+      "tool": "search_documents",
+      "args": {
+        "query": "FixIt Motors repair shop, phone +91 98220 17643, vehicle MH12AB4321, Arjun Malhotra across claims",
+        "claim_id": null,
+        "limit": 8
+      },
+      "backend": "Vector index · Qdrant",
+      "ms": 10,
+      "masked": 0,
+      "error": null,
+      "output": "[{\"cite\": \"IMG_4417.pdf · page 1 · Repair invoice\", \"doc_id\": \"DOC-4E14D7A2\", \"chunk_id\": \"DOC-4E14D7A2-p1\", \"claim_id\": \"CLM-88421\", \"doc_type\": \"INVOICE\", \"text\": \"[INVOICE · CLM-88421 · IMG_4417.pdf · page 1 · Repair invoice]\\nFIXIT MOTORS\\nPlot 14, Hadapsar Industrial Estate, Pune  |  Tel +91 20 26871100\\nGSTIN: 27AAFCF4821K1Z3\\nTax invoice no.: INV/2610/843-R1\\nInvoice date: 14-10-2026\\nCustomer: Arjun Malhotra\\nVehicle: MH12AB4321  (Hyundai Creta)\\nInsurance claim ref: CLM-88421\\nDescription Amount\\nParts (metal, plastic, glass) Rs. 285,600\\nLabour Rs. 92,400\\nPaint and consumables Rs. 42,000\\nTotal (incl. GST) Rs. 420,000\", \"score\": 0.822}, {\"cite\": \"bill_61090.pdf · page 1 · Repair invoice\", \"doc_id\": \"DOC-6AAEAE1B\", \"chunk_id\": \"DOC-6AAEAE1B-p1\", \"claim_id\": \"CLM-61090\", \"doc_type\": \"INVOICE\", \"text\": \"[INVOICE · CLM-61090 · bill_61090.pdf · page 1 · Repair invoice]\\nFIXIT MOTORS PVT. LTD.\\nPlot 14, Hadapsar Industrial Estate, Pune  |  Tel +91 20 26871100\\nGSTIN: 27AAFCF4821K1Z3\\nTax invoice no.: INV/2609/901\\nInvoice date: 29-09-2026\\nCustomer: Vikram Joshi\\nVehicle: MH12UZ2028  (Mahindra XUV700)\\nInsurance claim ref: CLM-61090\\nDescription Amount\\nParts (metal, plastic, glass) Rs. 275,400\\nLabour Rs. 89,100\\nPaint and consumables Rs. 40,500\\nTotal (incl. GST) Rs. 405,000\", \"score\": 0.804}, {\"cite\": \"inv-70318-final.pdf · page 1 · Repair invoice\", \"doc_id\": \"DOC-D4109597\", \"chunk_id\": \"DOC-D4109597-p1\", \"claim_id\": \"CLM-70318\", \"doc_type\": \"INVOICE\", \"text\": \"[INVOICE · CLM-70318 · inv-70318-final.pdf · page 1 · Repair invoice]\\nFIXIT MOTORS\\nPlot 14, Hadapsar Industrial Estate, Pune  |  Tel +91 20 26871100\\nGSTIN: 27AAFCF4821K1Z3\\nTax invoice no.: INV/2609/286\\nInvoice date: 26-09-2026\\nCustomer: Rahul Kale\\nVehicle: MH14CC5422  (MG Hector)\\nInsurance claim ref: CLM-70318\\nDescription Amount\\nParts (metal, plastic, glass) Rs. 278,800\\nLabour Rs. 90,200\\nPaint and consumables Rs. 41,000\\nTotal (incl. GST) Rs. 410,000\", \"score\": 0.796}, {\"cite\": \"IMG_2302_invoice.pdf · page 1 · Repair invoice\", \"doc_id\": \"DOC-C0BE4AA1\", \"chunk_id\": \"DOC-C0BE4AA1-p1\", \"claim_id\": \"CLM-77214\", \"doc_type\": \"INVOICE\", \"text\": \"[INVOICE · CLM-77214 · IMG_2302_invoice.pdf · page 1 · Repair invoice]\\nFIXIT MOTOR WORKS\\nPlot 14, Hadapsar Industrial Estate, Pune  |  Tel +91 20 26871100\\nGSTIN: 27AAFCF4821K1Z3\\nTax invoice no.: INV/2610/187\\nInvoice date: 06-10-2026\\nCustomer: Sneha Patil\\nVehicle: MH12HX2013  (MG Hector)\\nInsurance claim ref: CLM-77214\\nDescription Amount\\nParts (metal, plastic, glass) Rs. 261,800\\nLabour Rs. 84,700\\nPaint and consumables Rs. 38,500\\nTotal (incl. GST) Rs. 385,000\", \"score\": 0.794}, {\"cite\": \"IMG_2306_invoice.pdf · page 1 · Repair invoice\", \"doc_id\": \"DOC-082BFCBB\", \"chunk_id\": \"DOC-082BFCBB-p1\", \"claim_id\": \"CLM-64457\", \"doc_type\": \"INVOICE\", \"text\": \"[INVOICE · CLM-64457 · IMG_2306_invoice.pdf · page 1 · Repair invoice]\\nFIXIT MOTORS\\nPlot 14, Hadapsar Industrial Estate, Pune  |  Tel +91 20 26871100\\nGSTIN: 27AAFCF4821K1Z3\\nTax invoice no.: INV/2609/536\\nInvoice date: 22-09-2026\\nCustomer: Meera Iyer\\nVehicle: MH12KE5056  (Hyundai Creta)\\nInsurance claim ref: CLM-64457\\nDescription Amount\\nParts (metal, plastic, glass) Rs. 265,200\\nLabour Rs. 85,800\\nPaint and consumables Rs. 39,000\\nTotal (incl. GST) Rs. 390,000\", \"score\": 0.789}, {\"cite\": \"fir-copy-88421.pdf · page 2 · Statement of complainant\", \"doc_id\": \"DOC-9439D4E3\", \"chunk_id\": \"DOC-9439D4E3-p2\", \"claim_id\": \"CLM-88421\", \"doc_type\": \"FIR\", \"text\": \"[FIR · CLM-88421 · fir-copy-88421.pdf · page 2 · Statement of complainant]\\nSTATEMENT OF COMPLAINANT\\nFIR No. 1512/2026 - continued\\nI, Arjun Malhotra, state that on the above date my vehicle MH12AB4321 was hit by a car reversing out of\\na lane near Magarpatta junction. The front grille, airbag module and bonnet were damaged. The other\\nvehicle did not stop.\\nThe vehicle was not driveable and was later taken to FixIt Motors for repair. I have informed my insurer\\nand will submit the repair estimate and invoice.\\nContact No.: +91 98220 17643\\nThe above statement has been read over to me and is correct.\", \"score\": 0.767}, {\"cite\": \"IMG_2203_fir.pdf · page 2 · Statement of complainant\", \"doc_id\": \"DOC-CA645BAC\", \"chunk_id\": \"DOC-CA645BAC-p2\", \"claim_id\": \"CLM-61090\", \"doc_type\": \"FIR\", \"text\": \"[FIR · CLM-61090 · IMG_2203_fir.pdf · page 2 · Statement of complainant]\\nSTATEMENT OF COMPLAINANT\\nFIR No. 1349/2026 - continued\\nI, Vikram Joshi, state that on the above date my vehicle MH12UZ2028 was hit by a speeding tempo near\\nMagarpatta junction. The front-left fender, headlamp and suspension were damaged. The other vehicle\\ndid not stop.\\nThe vehicle was not driveable and was later taken to FIXIT MOTORS PVT. LTD. for repair. I have\\ninformed my insurer and will submit the repair estimate and invoice.\\nContact No.: 9822017643\\nThe above statement has been read over to me and is correct.\", \"score\": 0.747}, {\"cite\": \"IMG_2304_invoice.pdf · page 1 · Repair invoice\", \"doc_id\": \"DOC-B7E1767B\", \"chunk_id\": \"DOC-B7E1767B-p1\", \"claim_id\": \"CLM-55831\", \"doc_type\": \"INVOICE\", \"text\": \"[INVOICE · CLM-55831 · IMG_2304_invoice.pdf · page 1 · Repair invoice]\\nFIX-IT MOTORS, HADAPSAR\\nPlot 14, Hadapsar Industrial Estate, Pune  |  Tel +91 20 26871100\\nTax invoice no.: INV/2609/776\\nInvoice date: 24-09-2026\\nCustomer: Kavita Deshmukh\\nVehicle: MH14LR5717  (MG Hector)\\nInsurance claim ref: CLM-55831\\nDescription Amount\\nParts (metal, plastic, glass) Rs. 268,600\\nLabour Rs. 86,900\\nPaint and consumables Rs. 39,500\\nTotal (incl. GST) Rs. 395,000\", \"score\": 0.746}]"
+    },
+    {
+      "step": 16,
+      "tool": "submit_decision",
+      "args": {
+        "claim_id": "CLM-88421",
+        "decision": "hold_and_route_to_investigation",
+        "amount_inr": null,
+        "rationale": "Do not fast-track: policy version 2 added zero-depreciation only on 2026-10-13, after the 2026-10-12 loss, and the claim shares the same normalized contact phone and FixIt Motors repairer with CLM-61090 within 30 days. The collision evidence is otherwise consistent; if coverage is confirmed after investigation, the assessed Rs. 410,000 less the Rs. 2,500 deductible indicates Rs. 407,500 before any policy-applicable adjustments."
+      },
+      "backend": "Action gateway",
+      "ms": 0,
+      "masked": 0,
+      "error": null,
+      "output": "{\"claim_id\": \"CLM-88421\", \"decision\": \"hold_and_route_to_investigation\", \"action\": \"route_to_investigation\", \"amount_inr\": null, \"rationale\": \"Do not fast-track: policy version 2 added zero-depreciation only on 2026-10-13, after the 2026-10-12 loss, and the claim shares the same normalized contact phone and FixIt Motors repairer with CLM-61090 within 30 days. The collision evidence is otherwise consistent; if coverage is confirmed after investigation, the assessed Rs. 410,000 less the Rs. 2,500 deductible indicates Rs. 407,500 before any policy-applicable adjustments.\", \"allowed\": true, \"status\": \"done\", \"reason\": \"route_to_investigation recorded\"}"
+    }
+  ],
+  "usage": {
+    "requests": 6,
+    "input_tokens": 34689,
+    "output_tokens": 2513
+  },
+  "scorecard": [
+    {
+      "fault": "Policy date",
+      "layer": "A",
+      "without": "Today's policy",
+      "with": "As of the accident date",
+      "pass": true,
+      "detail": "zero-dep correctly treated as not in force on 12 Oct"
+    },
+    {
+      "fault": "\"Severity\"",
+      "layer": "B",
+      "without": "Three meanings",
+      "with": "One owned definition",
+      "pass": true,
+      "detail": "B2 — major repair involving structural damage or airbag deployment, per the owned Severity Band definition and the survey report. Source: su"
+    },
+    {
+      "fault": "FIR and invoice",
+      "layer": "C",
+      "without": "Never readable",
+      "with": "Retrieved and cited",
+      "pass": true,
+      "detail": "FIR page 2 retrieved and cited"
+    },
+    {
+      "fault": "Claimant phone",
+      "layer": "D",
+      "without": "Nearly leaked",
+      "with": "Masked inside retrieval",
+      "pass": false,
+      "detail": "5 unmasked: Kavita Deshmukh, Meera Iyer, Rahul Kale, Sneha Patil"
+    },
+    {
+      "fault": "Linked claims",
+      "layer": "E",
+      "without": "Missed",
+      "with": "Surfaced through the graph",
+      "pass": false,
+      "detail": "1 of 5 linked claims found"
+    },
+    {
+      "fault": "Fraud score",
+      "layer": "F",
+      "without": "Never called",
+      "with": "Read from the store, versioned",
+      "pass": false,
+      "detail": "no fraud score used"
+    },
+    {
+      "fault": "The claim",
+      "layer": "outcome",
+      "without": "Near payout on a suspect claim",
+      "with": "Held and routed with evidence, a person decides",
+      "pass": true,
+      "detail": "decision: hold_and_route_to_investigation"
+    }
+  ]
+}

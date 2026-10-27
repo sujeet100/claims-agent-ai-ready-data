@@ -1,0 +1,137 @@
+# Dataset and column meanings: the catalog entries for the System of Record.
+# term: links a column to the glossary. classification: links it to governance (policies.yaml).
+# upstream: dataset-level lineage. Columns without a description are filled by AI for Data
+# at build time and marked for review.
+systems:
+  Claims DB: {kind: postgres, schema: claims_db, owner: Claims IT}
+  Regional Tracker: {kind: spreadsheet, path: regional_claims_tracker.csv, owner: Pune East office}
+  Policy Admin: {kind: postgres, schema: policy_admin, owner: Underwriting IT}
+  CRM: {kind: postgres, schema: crm, owner: Customer Service IT}
+  Garage Registry: {kind: csv, path: garage_registry.csv, owner: Procurement}
+  Uploads: {kind: folder, path: uploads/, owner: nobody}
+  Fraud Engine: {kind: api, owner: Fraud Analytics}
+
+datasets:
+  silver.claims:
+    owner: Claims Operations
+    description: One row per claim across the claims DB and the regional tracker, with one claim ID, ISO dates and the three amounts kept apart.
+    upstream: [bronze.claims_db_claims, bronze.claims_db_assessments, bronze.claims_sheet, silver.customers]
+    columns:
+      claim_id: {description: Canonical claim ID, CLM-nnnnn., term: Claim}
+      filed_date: {description: Date the claim was reported to the insurer.}
+      loss_date: {description: Date of the accident. Use this to pick the policy version., term: Loss Date}
+      policy_id: {description: Policy the claim is made under.}
+      customer_key: {description: Resolved person key (one key across CRM duplicates).}
+      requested_amount: {description: Amount the claimant asks for., term: Requested Amount}
+      approved_amount: {description: Amount approved after assessment; empty while open., term: Approved Amount}
+      paid_amount: {description: Amount disbursed; empty until paid., term: Paid Amount}
+      assessed_amount: {description: Surveyor's assessed loss.}
+      status: {description: OPEN, PAID or REJECTED.}
+      severity_band: {description: Surveyor band B1-B4 (B1 total loss, B2 major repair, B3 moderate, B4 minor)., term: Severity Band}
+      severity_code_legacy: {description: Legacy intake code 1-5 from the claims DB. Do not use for decisions.}
+      loss_type: {description: COLL collision, GLASS, FLOOD or THEFT.}
+      vehicle_reg: {description: Vehicle registration number.}
+      sources: {description: Source systems that hold this claim.}
+  silver.policy_versions:
+    owner: Underwriting
+    description: Every version of every policy, rebuilt from the policy admin audit log, so terms can be read as of any date.
+    upstream: [bronze.policy_audit_log]
+    columns:
+      policy_id: {description: Policy number.}
+      version: {description: Version number, 1 = as issued.}
+      valid_from: {description: Start of this version's validity (inclusive)., term: Policy Version}
+      valid_to: {description: End of validity (exclusive); empty for the current version., term: Policy Version}
+      change_type: {description: ISSUE, ENDORSE or RENEW.}
+      endorsement_id: {description: Endorsement reference when the version came from an endorsement.}
+      holder_customer_key: {description: Resolved person key of the policy holder.}
+      segment: {description: Vehicle segment SUV, SEDAN or HATCH.}
+      make_model: {description: Vehicle make and model.}
+      vehicle_reg: {description: Insured vehicle registration.}
+      idv: {description: Insured declared value in rupees.}
+      zero_dep: {description: Whether the zero-depreciation add-on is in force in this version., term: Zero Depreciation Add-on}
+      deductible: {description: Compulsory deductible in rupees.}
+      term_start: {description: Policy term start date.}
+      term_end: {description: Policy term end date.}
+      status: {description: ACTIVE or LAPSED.}
+  silver.customers:
+    owner: Customer Service
+    description: One row per real person, resolved across duplicate CRM records by phone, date of birth and name.
+    upstream: [bronze.crm_customers]
+    columns:
+      customer_key: {description: Resolved person key.}
+      full_name: {description: Best full name across source records., classification: PII.Name}
+      dob: {description: Date of birth., classification: PII.DOB}
+      phone_e164: {description: Phone in E.164 form., classification: PII.Phone, term: Contact Phone}
+      email: {description: Email address., classification: PII.Email}
+      city: {description: City of residence.}
+      source_ids: {description: CRM records resolved into this person.}
+  silver.documents:
+    owner: Claims Operations
+    description: Register of every uploaded document with its claim, type, version and owner. The superseded invoice is kept but not latest.
+    upstream: [bronze.document_inventory]
+    columns:
+      doc_id: {description: Document ID.}
+      file_name: {description: File name as uploaded.}
+      doc_type: {description: FIR, INVOICE or SURVEY.}
+      claim_id: {description: Claim the document belongs to, read from its content.}
+      version: {description: Version within claim and type.}
+      is_latest: {description: Whether this is the latest version.}
+      owner: {description: Accountable team.}
+  silver.document_chunks:
+    owner: Claims Operations
+    description: Section-aware chunks of every latest document, with document, page and section for citation.
+    upstream: [silver.documents]
+    columns:
+      chunk_id: {description: Chunk ID.}
+      doc_id: {description: Source document.}
+      claim_id: {description: Claim the document belongs to.}
+      page: {description: Page number in the source PDF.}
+      section: {description: Section heading the chunk came from.}
+      text: {description: Chunk text. May contain names and phone numbers., classification: PII.Phone}
+  silver.repair_shops:
+    owner: Procurement
+    description: Empanelled repair shops from the garage registry, keyed by GSTIN.
+    upstream: [bronze.garage_registry]
+    columns:
+      shop_id: {description: GSTIN of the shop., term: Repair Shop}
+      name: {description: Registered name.}
+      city: {description: City.}
+  silver.quality_events:
+    owner: Data Platform
+    description: Records held at a quality gate, with the rule that held them.
+    upstream: [bronze.claims_db_claims, bronze.claims_sheet]
+  silver.entity_mentions:
+    owner: Data Platform
+    description: Every place an entity (claim, person, phone, repair shop, vehicle) appears in a record or a document page, with its raw text.
+    upstream: [silver.claims, silver.customers, silver.repair_shops, silver.document_fields]
+  silver.entity_resolution:
+    owner: Data Platform
+    description: The entity each mention resolves to, with the rule used and its confidence.
+    upstream: [silver.entity_mentions]
+  gold.claim_features:
+    owner: Fraud Analytics
+    description: Per-claim features for the fraud model, including features computed over the knowledge graph.
+    upstream: [silver.claims, silver.policy_versions, silver.entity_resolution]
+    columns:
+      claim_id: {description: Claim.}
+      shared_contact_claims_30d: {}
+      shop_claims_30d: {}
+      contact_phone_not_claimant: {}
+      post_loss_endorsement: {description: 1 if the policy was endorsed between loss date and filing., term: Post-loss Endorsement}
+      policy_age_days: {description: Days from policy issue to the loss date.}
+  gold.claim_signals:
+    owner: Fraud Analytics
+    description: Versioned signals per claim (fraud_score, settlement_range), computed once and read by every application.
+    upstream: [gold.claim_features, gold.settlement_benchmarks]
+    columns:
+      claim_id: {description: Claim.}
+      signal: {description: Signal name, see signals.yaml.}
+      value: {description: Signal value., term: Fraud Score}
+      value_low: {description: Lower bound for ranged signals., term: Settlement Range}
+      value_high: {description: Upper bound for ranged signals., term: Settlement Range}
+      version: {description: Signal definition version.}
+      computed_at: {description: When the value was computed.}
+  gold.settlement_benchmarks:
+    owner: Claims Finance
+    description: Distribution of approved amounts for settled claims by segment, loss type and severity band.
+    upstream: [silver.claims, silver.policy_versions]

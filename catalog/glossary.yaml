@@ -1,0 +1,65 @@
+# Business glossary: one owned definition per term. Layer B loads this into the catalog,
+# the metadata graph and the discovery index. Columns point at terms in datasets.yaml.
+terms:
+  Claim:
+    owner: Claims Operations
+    definition: A request by a policy holder for payment under a policy, for one loss event. Identified by claim_id in the form CLM-nnnnn.
+    synonyms: [claim no, claim ref, claim number]
+  Requested Amount:
+    owner: Claims Operations
+    definition: What the claimant asks the insurer to pay, usually the repair estimate or invoice total. Not what will be paid.
+    synonyms: [claim amount, amount, est. amount]
+  Approved Amount:
+    owner: Claims Finance
+    definition: What the insurer agrees to pay after assessment, net of deductible and depreciation. Not the claimed amount.
+    synonyms: [amt_appr, settlement amount]
+  Paid Amount:
+    owner: Claims Finance
+    definition: What has actually been disbursed. Empty until payment is made.
+  Severity Band:
+    owner: Motor Claims Engineering
+    definition: >-
+      The surveyor's assessment of damage, on the band scale B1-B4 where a LOWER number is MORE severe.
+      B1 = total loss, B2 = major repair (structural damage or airbag deployment), B3 = moderate repair,
+      B4 = minor repair. This is the only severity used for decisions. The legacy claims-system code
+      (1-5, 5 worst) and the regional tracker's Low/Med/High are intake guesses and map to bands only
+      approximately.
+    synonyms: [severity, sev_band, damage band]
+  Loss Date:
+    owner: Claims Operations
+    definition: The date the accident or loss occurred. Coverage is decided by the policy version in force on this date, not by the policy as it stands today.
+    synonyms: [accident date, date of occurrence, loss_dt]
+  Policy:
+    owner: Underwriting
+    definition: A motor insurance contract for one vehicle, identified by policy_id (P-nnnn). Its terms change over time through endorsements; see Policy Version.
+  Policy Version:
+    owner: Underwriting
+    definition: The terms of a policy over one validity interval [valid_from, valid_to). Use the version whose interval contains the loss date.
+  Zero Depreciation Add-on:
+    owner: Underwriting
+    definition: An add-on that pays parts at full cost without depreciation. Applies only to losses that occur while the add-on is in force.
+    synonyms: [zero dep, nil depreciation]
+  Post-loss Endorsement:
+    owner: Fraud Analytics
+    definition: A change to policy terms made after the loss date and before or after filing. A known fraud indicator when it widens cover for the loss being claimed.
+  Fast-track Settlement:
+    owner: Claims Operations
+    definition: >-
+      Paying a low-risk claim without manual review. Eligible only if ALL hold: requested amount at most
+      Rs 5,00,000; severity band B2, B3 or B4; no post-loss endorsement; fraud_score below 0.50; no
+      linked-claims pattern; FIR and invoice on file. Any payment still needs human approval.
+  Linked Claims:
+    owner: Fraud Analytics
+    definition: Claims that share a repair shop, contact phone, vehicle or person with another claim within 30 days. A pattern to investigate, not proof of fraud.
+  Repair Shop:
+    owner: Procurement
+    definition: An empanelled garage, identified by GSTIN in the garage registry. Invoices spell names inconsistently.
+  Contact Phone:
+    owner: Claims Operations
+    definition: The phone number a complainant gives in the FIR for follow-up. Personal data.
+  Fraud Score:
+    owner: Fraud Analytics
+    definition: Probability-like score in [0,1] from the fraud model, computed once per claim and versioned. 0.50 or above routes the claim to investigators.
+  Settlement Range:
+    owner: Claims Finance
+    definition: The P10-P90 of approved amounts for comparable settled claims (same segment, loss type and severity band). A benchmark, not an approval.

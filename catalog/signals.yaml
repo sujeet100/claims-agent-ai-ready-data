@@ -1,0 +1,15 @@
+# Insights and signals: defined once, computed and stored, versioned, served to every consumer.
+signals:
+  fraud_score:
+    owner: Fraud Analytics
+    model: fraud-model
+    version: "3.2"
+    freshness_sla_hours: 24
+    description: Probability-like fraud score per claim from the fraud model, using tabular and graph features.
+    features: [shared_contact_claims_30d, shop_claims_30d, contact_phone_not_claimant, post_loss_endorsement, policy_age_days]
+    threshold: 0.5
+  settlement_range:
+    owner: Claims Finance
+    version: "1.4"
+    freshness_sla_hours: 168
+    description: P10-P90 of approved amounts for comparable settled claims (same segment, loss type, severity band).

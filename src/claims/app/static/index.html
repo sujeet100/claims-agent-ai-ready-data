@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI-Ready Claims</title>
+<link href="https://fonts.googleapis.com/css2?family=Mulish:wght@400..800&family=Zilla+Slab:wght@500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+/* The agentic UI: the same question to two agents, side by side. Plain HTML, no build step. */
+:root {
+  --indigo: #33357D; --night: #27235A; --violet: #4A4C92; --lilac: #C9CAE6; --mist: #E6E6F4;
+  --rust: #B4513F; --rust-tint: #FBEFEA; --mustard: #E0AA55; --teal: #2F7F86; --teal-tint: #E3F1F2;
+  --cream: #F5F4F0; --card: #FEFCFA; --line: #DDD8CF; --sand: #F3F0EA; --ink: #434343; --muted: #6E6A66;
+  --serif: 'Zilla Slab', Georgia, serif; --sans: 'Mulish', system-ui, sans-serif; --mono: 'JetBrains Mono', ui-monospace, monospace;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; background: var(--cream); color: var(--ink); font-family: var(--sans); font-size: 15px; }
+button, input, select { font-family: inherit; }
+header { background: var(--indigo); color: var(--card); display: flex; align-items: center; gap: 20px; padding: 0 20px; height: 50px; }
+header .brand { font-family: var(--serif); font-weight: 700; font-size: 19px; }
+header .brand span { color: var(--mustard); }
+header .right { margin-left: auto; display: flex; gap: 10px; align-items: center; }
+.chip { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; white-space: nowrap; background: var(--night); color: var(--lilac); }
+.seg { display: inline-flex; background: var(--night); border-radius: 999px; padding: 3px; }
+.seg button { background: none; border: none; color: var(--lilac); font-weight: 700; font-size: 12px; padding: 5px 12px; border-radius: 999px; cursor: pointer; }
+.seg button.on { background: var(--mustard); color: var(--night); }
+
+main { height: calc(100% - 50px); display: grid; grid-template-rows: 1fr auto; }
+.panes { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 12px 16px 0; min-height: 0; }
+.pane { background: var(--card); border: 1.5px solid var(--line); border-radius: 16px; display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
+.pane-head { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-bottom: 1.5px solid var(--line); }
+.pane-head .title { font-family: var(--serif); font-weight: 700; font-size: 19px; color: var(--indigo); line-height: 1.1; }
+.pane.before .pane-head .title { color: var(--rust); }
+.pane-head .sub { font-size: 12px; color: var(--muted); }
+.pane-head .logos { margin-left: auto; display: flex; gap: 7px; align-items: center; }
+.logo { height: 18px; display: inline-flex; align-items: center; }
+.logo img, .logo svg { height: 18px; width: auto; max-width: 70px; }
+.pane-head select { border: 1.5px solid var(--line); border-radius: 8px; padding: 3px 5px; font-size: 12px; background: var(--card); color: var(--ink); }
+.thread { flex: 1; overflow: auto; padding: 12px 14px; display: flex; flex-direction: column; gap: 10px; scroll-behavior: smooth; }
+.empty { margin: auto; text-align: center; color: var(--muted); max-width: 340px; line-height: 1.5; font-size: 14px; }
+.q { align-self: flex-end; background: var(--indigo); color: var(--card); border-radius: 14px 14px 4px 14px; padding: 8px 12px; max-width: 90%; font-weight: 600; line-height: 1.4; font-size: 14px; }
+.steps { display: flex; flex-direction: column; gap: 4px; }
+.steps .lbl { font-size: 10.5px; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); margin: 2px 0; }
+.step { display: grid; grid-template-columns: 20px 1fr auto; gap: 8px; align-items: start; padding: 6px 9px; border-radius: 10px; background: var(--sand); transition: opacity .35s, background .35s, transform .35s; }
+.step .ic { height: 18px; display: grid; place-items: center; margin-top: 1px; }
+.step .ic img, .step .ic svg { max-height: 16px; max-width: 18px; }
+.step .what { font-weight: 700; font-size: 13px; color: var(--ink); }
+.step .got { font-size: 12px; color: var(--muted); margin-top: 1px; line-height: 1.35; overflow-wrap: anywhere; }
+.step .tag { display: flex; gap: 4px; align-items: center; }
+.badge { min-width: 19px; height: 19px; border-radius: 10px; display: grid; place-items: center; font-size: 10.5px; font-weight: 800; background: var(--indigo); color: var(--card); padding: 0 6px; white-space: nowrap; }
+.badge.lock { background: var(--teal); } .badge.warn { background: var(--rust); }
+.step.live { outline: 2px solid var(--mustard); }
+.step .detail { display: none; grid-column: 2 / 4; margin-top: 5px; border-top: 1px dashed var(--line); padding-top: 6px; font-size: 13px; line-height: 1.45; }
+.step .detail b { color: var(--indigo); }
+.step .detail .why { color: var(--teal); font-weight: 700; margin-top: 3px; }
+.pane.before .step .detail .why { color: var(--rust); }
+.thread.stepping .step, .thread.stepping .answer { opacity: .3; }
+.thread.stepping .step.focus { opacity: 1; background: #FFF8EA; outline: 2px solid var(--mustard); }
+.thread.stepping .step.focus .detail { display: block; }
+.thread.stepping .answer.focus { opacity: 1; outline: 2px solid var(--mustard); }
+.answer { border-radius: 14px; padding: 11px 13px; background: var(--mist); line-height: 1.5; transition: opacity .35s; }
+.pane.before .answer { background: var(--rust-tint); }
+.verdict-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.verdict { font-family: var(--serif); font-weight: 700; font-size: 20px; color: var(--indigo); }
+.verdict.bad { color: var(--rust); }
+.st { font-size: 11.5px; font-weight: 800; padding: 3px 9px; border-radius: 999px; }
+.st.pay { background: var(--rust); color: var(--card); } .st.gate { background: var(--indigo); color: var(--card); } .st.ok { background: var(--teal-tint); color: var(--teal); }
+.answer p { margin: 6px 0 0; font-size: 13.5px; }
+.answer ul { margin: 4px 0 0; padding-left: 18px; font-size: 13.5px; }
+.working { color: var(--muted); font-style: italic; font-size: 13px; }
+
+.ask { padding: 10px 16px 14px; display: flex; flex-direction: column; gap: 7px; }
+.sugg { display: flex; gap: 7px; flex-wrap: wrap; }
+.sugg button { border: 1.5px solid var(--line); background: var(--card); border-radius: 999px; padding: 4px 11px; font-size: 12px; color: var(--ink); cursor: pointer; }
+.bar { display: flex; gap: 10px; }
+.bar input { flex: 1; border: 1.5px solid var(--line); border-radius: 12px; padding: 11px 13px; font-size: 14.5px; background: var(--card); }
+.bar input:focus { outline: 2px solid var(--mustard); }
+.bar button { border: none; border-radius: 12px; padding: 0 18px; font-weight: 800; background: var(--indigo); color: var(--card); cursor: pointer; }
+.bar button:disabled { opacity: .5; }
+code { font-family: var(--mono); font-size: 12px; }
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">CLM-88421 · <span>AI-ready</span> claims</div>
+  <div class="right">
+    <span class="chip" id="model">model</span>
+    <div class="seg" id="role"><button data-role="claims_officer" class="on">Claims officer</button><button data-role="investigator">Investigator</button></div>
+  </div>
+</header>
+<main>
+  <div class="panes">
+    <section class="pane before" id="p0"></section>
+    <section class="pane" id="p1"></section>
+  </div>
+  <div class="ask">
+    <div class="sugg" id="sugg"></div>
+    <form class="bar" id="bar"><input id="q" autocomplete="off" placeholder="Ask both agents…"><button id="send">Ask both</button></form>
+  </div>
+</main>
+<script src="/static/app.js"></script>
+</body>
+</html>

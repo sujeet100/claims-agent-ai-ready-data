@@ -1,0 +1,16 @@
+# Governance as data: classifications, who may see them, and which actions need a person.
+# Layer D compiles this into masked views, retrieval filters and the action gate.
+roles:
+  claims_officer: {description: Assesses claims and recommends settlement. Sees the assigned claimant's identity, never phone numbers or other claimants' identities.}
+  investigator:   {description: Special investigations unit. Sees personal data needed to investigate linked claims.}
+  claims_manager: {description: Approves settlements and payments.}
+classifications:
+  PII.Name:  {visible_to: [investigator], officer_rule: assigned_claimant_only, mask: pseudonym}
+  PII.Phone: {visible_to: [investigator], mask: partial_phone}
+  PII.Email: {visible_to: [investigator], mask: redact}
+  PII.DOB:   {visible_to: [investigator], mask: redact}
+actions:
+  route_to_investigation: {allowed_for: [claims_officer, investigator], requires_approval: false}
+  request_documents:      {allowed_for: [claims_officer, investigator], requires_approval: false}
+  approve_settlement:     {allowed_for: [claims_officer], requires_approval: true, approver_role: claims_manager}
+  fast_track_settlement:  {allowed_for: [claims_officer], requires_approval: true, approver_role: claims_manager}

@@ -1,0 +1,15 @@
+.venv/
+__pycache__/
+*.pyc
+.env
+.dagster/
+data/lakehouse/
+data/sources/
+data/generated/
+data/audit/
+data/incoming/
+data/runs-mini/
+.pytest_cache/
+.DS_Store
+# data/runs/ and data/recorded/ are kept: they are the offline fallback for the talk
+media/

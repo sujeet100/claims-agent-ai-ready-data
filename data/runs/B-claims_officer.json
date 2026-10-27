@@ -1,0 +1,302 @@
+{
+  "stage": "B",
+  "role": "claims_officer",
+  "model": "openai:gpt-5.6-luna",
+  "prompt": "Assess claim #CLM-88421, a ₹4.2L car-collision claim filed yesterday. Should we fast-track settlement, and at what amount? And flag anything suspicious.",
+  "run_id": "7c063c15",
+  "seconds": 31.2,
+  "tools_available": [
+    "classify_document",
+    "get_policy_status",
+    "list_datasets",
+    "query_lakehouse",
+    "get_policy_terms",
+    "list_claim_documents",
+    "search_catalog",
+    "define_term",
+    "submit_decision"
+  ],
+  "assessment": {
+    "decision": "hold_and_route_to_investigation",
+    "recommended_amount_inr": null,
+    "settlement_range_inr": [
+      407500,
+      407500
+    ],
+    "policy_terms_used": "Policy P-2231 version 1 in force on loss date 2026-10-12: MOTOR_COMP, Hyundai Creta MH12AB4321, IDV ₹11,20,000, zero-depreciation not in force, deductible ₹2,500. Endorsement END-5512 changed zero-depreciation to true effective 2026-10-13 10:42, after the loss.",
+    "zero_dep_applies": false,
+    "severity_reading": "B2, from the surveyor severity_band in silver.claims; assessed loss ₹4,10,000.",
+    "fraud_score": null,
+    "linked_claims": [],
+    "red_flags": [
+      "Zero-depreciation was endorsed after the reported loss but before the claim was filed: loss 2026-10-12, endorsement effective 2026-10-13 10:42, filed 2026-10-14.",
+      "The governed tools did not return an available fraud score or linked-claim result; this is an evidence limitation, not evidence of no links."
+    ],
+    "evidence": [
+      {
+        "source": "silver.claims, CLM-88421",
+        "detail": "Open collision claim; loss date 2026-10-12, filed date 2026-10-14, requested ₹4,20,000, assessed ₹4,10,000, severity B2, vehicle MH12AB4321, policy P-2231."
+      },
+      {
+        "source": "get_policy_terms(P-2231, as_of 2026-10-12)",
+        "detail": "Version 1 was in force on the loss date with zero-depreciation off and ₹2,500 deductible; zero-depreciation was added only by END-5512 on 2026-10-13 10:42."
+      },
+      {
+        "source": "silver.documents / list_claim_documents",
+        "detail": "Latest registered support includes FIR fir-copy-88421.pdf, invoice IMG_4417.pdf (version 2), and survey survey_report_SV118.pdf. The available tools classified these documents but did not expose their contents for reading."
+      },
+      {
+        "source": "submit_decision result",
+        "detail": "Decision recorded as hold_and_route_to_investigation; no payment authorized."
+      }
+    ],
+    "summary": "Do not fast-track or pay at this stage. The loss is within the ₹5 lakh fast-track ceiling and is rated B2, but the post-loss zero-depreciation endorsement is a concrete red flag: zero-depreciation was not applicable on 2026-10-12, then was added before filing on 2026-10-14. Route to investigation; if the assessed ₹4,10,000 is confirmed as the eligible gross loss, the policy deductible implies ₹4,07,500 before any other policy adjustments."
+  },
+  "decisions": [
+    {
+      "claim_id": "CLM-88421",
+      "decision": "hold_and_route_to_investigation",
+      "action": "route_to_investigation",
+      "amount_inr": null,
+      "rationale": "Loss occurred 2026-10-12, before the zero-depreciation endorsement effective 2026-10-13 10:42; the policy terms in force at loss had zero-depreciation off and a ₹2,500 deductible. The claim was filed 2026-10-14, and this post-loss endorsement is a concrete coverage/fraud red flag requiring investigation; no fraud score or linked-claim result was available from the governed tools.",
+      "allowed": true,
+      "status": "done",
+      "reason": "route_to_investigation recorded"
+    }
+  ],
+  "trace": [
+    {
+      "step": 1,
+      "tool": "list_datasets",
+      "args": {},
+      "backend": "Lakehouse · Iceberg + DuckDB",
+      "ms": 67,
+      "masked": 0,
+      "error": null,
+      "output": "[{\"dataset\": \"silver.claims\", \"columns\": {\"claim_id\": \"Canonical claim ID\", \"filed_date\": \"Date the claim was reported to the insurer.\", \"loss_date\": \"Date of the accident. Use this to pick the policy version.\", \"policy_id\": \"Policy the claim is made under.\", \"customer_key\": \"Resolved person key (one key across CRM duplicates).\", \"requested_amount\": \"Amount the claimant asks for.\", \"approved_amount\": \"Amount approved after assessment; empty while open.\", \"paid_amount\": \"Amount disbursed; empty until paid.\", \"assessed_amount\": \"Surveyor's assessed loss.\", \"status\": \"OPEN\", \"severity_band\": \"Surveyor band B1-B4 (B1 total loss\", \"severity_code_legacy\": \"Legacy intake code 1-5 from the claims DB. Do not use for decisions.\", \"loss_type\": \"COLL collision\", \"vehicle_reg\": \"Vehicle registration number.\", \"sources\": \"Source systems that hold this claim.\"}, \"description\": \"One row per claim across the claims DB and the regional tracker, with one claim ID, ISO dates and the three amounts kept apart.\"}, {\"dataset\": \"silver.policy_versions\", \"columns\": {\"policy_id\": \"Policy number.\", \"version\": \"Version number\", \"valid_from\": \"Start of this version's validity (inclusive).\", \"valid_to\": \"End of validity (exclusive); empty for the current version.\", \"change_type\": \"ISSUE\", \"endorsement_id\": \"Endorsement reference when the version came from an endorsement.\", \"holder_customer_key\": \"Resolved person key of the policy holder.\", \"product\": \"The policy product code for the version, such as MOTOR_COMP.\", \"vehicle_reg\": \"Insured vehicle registration.\", \"make_model\": \"Vehicle make and model.\", \"segment\": \"Vehicle segment SUV\", \"idv\": \"Insured declared value in rupees.\", \"zero_dep\": \"Whether the zero-depreciation add-on is in force in this version.\", \"deductible\": \"Compulsory deductible in rupees.\", \"term_start\": \"Policy term start date.\", \"term_end\": \"Policy term end date.\", \"status\": \"ACTIVE or LAPSED.\"}, \"description\": \"Every version of every policy, rebuilt from the policy admin audit log, so terms can be read as of any date.\"}, {\"dataset\": \"silver.customers\", \"columns\": {\"customer_key\": \"Resolved person key.\", \"full_name\": \"Best full name across source records.\", \"dob\": \"Date of birth.\", \"phone_e164\": \"Phone in E.164 form.\", \"email\": \"Email address.\", \"city\": \"City of residence.\", \"source_ids\": \"CRM records resolved into this person.\", \"resolution_rule\": \"The rule used to resolve the customer record from duplicate CRM entries.\", \"resolution_confidence\": \"The confidence score for the customer record resolution, with 1.0 indicating the highest confidence.\"}, \"description\": \"One row per real person, resolved across duplicate CRM records by phone, date of birth and name.\"}, {\"dataset\": \"silver.documents\", \"columns\": {\"doc_id\": \"Document ID.\", \"file_name\": \"File name as uploaded.\", \"doc_type\": \"FIR\", \"claim_id\": \"Claim the document belongs to\", \"sha256\": \"SHA-256 hash identifying the uploaded document's file content.\", \"pages\": \"Number of pages in the uploaded document.\", \"owner\": \"Accountable team.\", \"registered_at\": \"Date and time when the document was registered in the platform.\", \"version\": \"Version within claim and type.\", \"is_latest\": \"Whether this is the latest version.\", \"supersedes\": \"Reference to the earlier document version that this document replaces, when applicable.\"}, \"description\": \"Register of every uploaded document with its claim, type, version and owner. The superseded invoice is kept but not latest.\"}, {\"dataset\": \"silver.repair_shops\", \"columns\": {\"shop_id\": \"GSTIN of the shop.\", \"name\": \"Registered name.\", \"address\": \"The shop's address as recorded in the garage registry.\", \"city\": \"City.\", \"phone_e164\": \"The shop's phone number in E.164 format.\", \"network_status\": \"The shop's network membership status, such as empanelled.\"}, \"description\": \"Empanelled repair shops from the garage registry, keyed by GSTIN.\"}, {\"dataset\": \"silver.quality_events\", \"columns\": {\"dataset\": \"Identifies the dataset containing the record held by the quality gate.\", \"record_key\": \"Identifies the specific record held by the quality gate.\", \"rule\": \"States the data quality rule that caused the record to be held.\", \"detail\": \"Provides additional information about the quality issue identified for the record.\", \"status\": \"Shows the current quality-gate status of the record.\", \"detected_at\": \"Records the timestamp when the quality issue was detected.\"}, \"description\": \"Records held at a quality gate, with the rule that held them.\"}, {\"dataset\": \"meta.datasets\", \"columns\": {\"dataset\": \"\", \"owner\": \"\", \"description\": \"\", \"upstream\": \"\", \"materialized\": \"\"}, \"description\": \"\"}, {\"dataset\": \"meta.columns\", \"columns\": {\"dataset\": \"\", \"column\": \"\", \"description\": \"\", \"term\": \"\", \"classification\": \"\", \"source\": \"\", \"review_status\": \"\"}, \"description\": \"\"}, {\"dataset\": \"meta.glossary\", \"columns\": {\"term\": \"\", \"owner\": \"\", \"definition\": \"\", \"synonyms\": \"\"}, \"description\": \"\"}]"
+    },
+    {
+      "step": 2,
+      "tool": "query_lakehouse",
+      "args": {
+        "sql": "SELECT * FROM silver.claims WHERE claim_id = 'CLM-88421'"
+      },
+      "backend": "Lakehouse · Iceberg + DuckDB",
+      "ms": 2,
+      "masked": 0,
+      "error": null,
+      "output": "{\"rows\": [{\"claim_id\": \"CLM-88421\", \"filed_date\": \"2026-10-14T00:00:00\", \"loss_date\": \"2026-10-12T00:00:00\", \"policy_id\": \"P-2231\", \"customer_key\": \"PER-4E7AE6\", \"requested_amount\": 420000.0, \"approved_amount\": null, \"paid_amount\": null, \"assessed_amount\": 410000.0, \"status\": \"OPEN\", \"severity_band\": \"B2\", \"severity_code_legacy\": 3, \"loss_type\": \"COLL\", \"vehicle_reg\": \"MH12AB4321\", \"sources\": \"claims_db,regional_tracker\"}], \"row_count\": 1, \"governed\": false}"
+    },
+    {
+      "step": 3,
+      "tool": "list_claim_documents",
+      "args": {
+        "claim_id": "CLM-88421"
+      },
+      "backend": "Lakehouse · silver.documents",
+      "ms": 2,
+      "masked": 0,
+      "error": null,
+      "output": "[{\"doc_id\": \"DOC-9439D4E3\", \"file_name\": \"fir-copy-88421.pdf\", \"doc_type\": \"FIR\", \"version\": 1, \"is_latest\": true, \"owner\": \"Claims Operations\", \"pages\": 2}, {\"doc_id\": \"DOC-54395BE9\", \"file_name\": \"invoice_88421.pdf\", \"doc_type\": \"INVOICE\", \"version\": 1, \"is_latest\": false, \"owner\": \"Claims Operations\", \"pages\": 1}, {\"doc_id\": \"DOC-4E14D7A2\", \"file_name\": \"IMG_4417.pdf\", \"doc_type\": \"INVOICE\", \"version\": 2, \"is_latest\": true, \"owner\": \"Claims Operations\", \"pages\": 1}, {\"doc_id\": \"DOC-B87D2451\", \"file_name\": \"survey_report_SV118.pdf\", \"doc_type\": \"SURVEY\", \"version\": 1, \"is_latest\": true, \"owner\": \"Claims Operations\", \"pages\": 1}]"
+    },
+    {
+      "step": 4,
+      "tool": "classify_document",
+      "args": {
+        "file_name": "survey_report_SV118.pdf"
+      },
+      "backend": "Document classifier",
+      "ms": 2,
+      "masked": 0,
+      "error": null,
+      "output": "{\"file_name\": \"survey_report_SV118.pdf\", \"doc_type\": \"SURVEY\"}"
+    },
+    {
+      "step": 5,
+      "tool": "classify_document",
+      "args": {
+        "file_name": "fir-copy-88421.pdf"
+      },
+      "backend": "Document classifier",
+      "ms": 3,
+      "masked": 0,
+      "error": null,
+      "output": "{\"file_name\": \"fir-copy-88421.pdf\", \"doc_type\": \"FIR\"}"
+    },
+    {
+      "step": 6,
+      "tool": "classify_document",
+      "args": {
+        "file_name": "IMG_4417.pdf"
+      },
+      "backend": "Document classifier",
+      "ms": 4,
+      "masked": 0,
+      "error": null,
+      "output": "{\"file_name\": \"IMG_4417.pdf\", \"doc_type\": \"INVOICE\"}"
+    },
+    {
+      "step": 7,
+      "tool": "query_lakehouse",
+      "args": {
+        "sql": "SELECT claim_id, loss_date, policy_id, customer_key, requested_amount, approved_amount, paid_amount, assessed_amount, status, severity_band, loss_type, vehicle_reg FROM silver.claims WHERE customer_key = 'PER-4E7AE6' OR vehicle_reg = 'MH12AB4321' ORDER BY loss_date"
+      },
+      "backend": "Lakehouse · Iceberg + DuckDB",
+      "ms": 7,
+      "masked": 0,
+      "error": null,
+      "output": "{\"rows\": [{\"claim_id\": \"CLM-88421\", \"loss_date\": \"2026-10-12T00:00:00\", \"policy_id\": \"P-2231\", \"customer_key\": \"PER-4E7AE6\", \"requested_amount\": 420000.0, \"approved_amount\": null, \"paid_amount\": null, \"assessed_amount\": 410000.0, \"status\": \"OPEN\", \"severity_band\": \"B2\", \"loss_type\": \"COLL\", \"vehicle_reg\": \"MH12AB4321\"}], \"row_count\": 1, \"governed\": false}"
+    },
+    {
+      "step": 8,
+      "tool": "get_policy_terms",
+      "args": {
+        "policy_id": "P-2231",
+        "as_of_date": "2026-10-12"
+      },
+      "backend": "Lakehouse · silver.policy_versions",
+      "ms": 8,
+      "masked": 0,
+      "error": null,
+      "output": "{\"policy_id\": \"P-2231\", \"as_of_date\": \"2026-10-12\", \"summary\": \"On 2026-10-12 version 1 was in force: zero-depreciation add-on NOT in force, deductible Rs 2,500. Changed on 2026-10-13 (ENDORSE END-5512): zero_dep=True.\", \"in_force\": {\"policy_id\": \"P-2231\", \"version\": 1, \"valid_from\": \"2025-11-02T11:00:00\", \"valid_to\": \"2026-10-13T10:42:00\", \"change_type\": \"ISSUE\", \"endorsement_id\": null, \"product\": \"MOTOR_COMP\", \"make_model\": \"Hyundai Creta\", \"vehicle_reg\": \"MH12AB4321\", \"segment\": \"SUV\", \"idv\": 1120000.0, \"zero_dep\": false, \"deductible\": 2500.0, \"term_start\": \"2025-11-02T00:00:00\", \"term_end\": \"2026-11-01T00:00:00\", \"status\": \"ACTIVE\"}, \"changes_after\": [{\"version\": 2, \"valid_from\": \"2026-10-13T10:42:00\", \"change_type\": \"ENDORSE\", \"endorsement_id\": \"END-5512\", \"zero_dep\": true, \"deductible\": 2500.0}]}"
+    },
+    {
+      "step": 9,
+      "tool": "search_catalog",
+      "args": {
+        "query": "fraud score, fraud indicators, linked claims by shared repair shop phone vehicle or person, collision claim risk signals"
+      },
+      "backend": "Discovery index · Qdrant",
+      "ms": 97,
+      "masked": 0,
+      "error": null,
+      "output": "[{\"kind\": \"term\", \"name\": \"Linked Claims\", \"route_to_tool\": \"define_term\", \"text\": \"Business term Linked Claims (owner Fraud Analytics): Claims that share a repair shop, contact phone, vehicle or person with another claim within 30 days. A pattern to investigate, not proof of fraud. Also called: \", \"score\": 0.78}, {\"kind\": \"signal\", \"name\": \"fraud_score\", \"route_to_tool\": null, \"text\": \"Signal fraud_score v3.2 (owner Fraud Analytics): Probability-like fraud score per claim from the fraud model, using tabular and graph features.\", \"score\": 0.749}, {\"kind\": \"dataset\", \"name\": \"gold.claim_features\", \"route_to_tool\": \"query_lakehouse\", \"text\": \"Dataset gold.claim_features (owner Fraud Analytics). Per-claim features for the fraud model, including features computed over the knowledge graph. Columns: claim_id: Claim.; post_loss_endorsement: 1 if the policy was endorsed between loss date and filing.; policy_age_days: Days from policy issue to the loss date.; shared_contact_claims_30d: Number of other claims in the 30-day period that share a contact with this claim.; shop_claims_30d: Number of claims associated with the same shop in the 30-day period.; contact_phone_not_claimant: Indicator that the contact phone number does not match the \", \"score\": 0.723}, {\"kind\": \"api\", \"name\": \"fraud_score_live\", \"route_to_tool\": null, \"text\": \"API /api/source/fraud-score/{claim_id} from Fraud Engine: Recomputes a fraud score from raw tables on every call. Has no access to graph features.\", \"score\": 0.713}, {\"kind\": \"dataset\", \"name\": \"gold.claim_signals\", \"route_to_tool\": \"query_lakehouse\", \"text\": \"Dataset gold.claim_signals (owner Fraud Analytics). Versioned signals per claim (fraud_score, settlement_range), computed once and read by every application. Columns: claim_id: Claim.; signal: Signal name; value: Signal value.; value_low: Lower bound for ranged signals.; value_high: Upper bound for ranged signals.; version: Signal definition version.; model_version: Identifies the version of the model used to calculate the claim signals.; computed_at: When the value was computed.; valid_until: Shows the date and time through which the claim signals are valid.; inputs: Contains the input featur\", \"score\": 0.712}, {\"kind\": \"term\", \"name\": \"Fraud Score\", \"route_to_tool\": \"define_term\", \"text\": \"Business term Fraud Score (owner Fraud Analytics): Probability-like score in [0,1] from the fraud model, computed once per claim and versioned. 0.50 or above routes the claim to investigators. Also called: \", \"score\": 0.711}]"
+    },
+    {
+      "step": 10,
+      "tool": "query_lakehouse",
+      "args": {
+        "sql": "SELECT * FROM gold.claim_signals WHERE claim_id = 'CLM-88421' ORDER BY signal, computed_at DESC"
+      },
+      "backend": "Lakehouse · Iceberg + DuckDB",
+      "ms": 4,
+      "masked": 0,
+      "error": "Catalog Error: Table with name claim_signals does not exist!\nDid you mean \"silver.claims\"?\n\nLINE 1: SELECT * FROM gold.claim_signals WHERE claim_id = 'CLM-88421' ORDER BY...\n                      ^^^^^^^^^^^^^^^^^^",
+      "output": "{\"error\": \"CatalogException: Catalog Error: Table with name claim_signals does not exist!\\nDid you mean \\\"silver.claims\\\"?\\n\\nLINE 1: SELECT * FROM gold.claim_signals WHERE claim_id = 'CLM-88421' ORDER BY...\\n                      ^^^^^^^^^^^^^^^^^^\"}"
+    },
+    {
+      "step": 11,
+      "tool": "query_lakehouse",
+      "args": {
+        "sql": "SELECT * FROM gold.claim_features WHERE claim_id = 'CLM-88421'"
+      },
+      "backend": "Lakehouse · Iceberg + DuckDB",
+      "ms": 4,
+      "masked": 0,
+      "error": "Catalog Error: Table with name claim_features does not exist!\nDid you mean \"silver.claims\"?\n\nLINE 1: SELECT * FROM gold.claim_features WHERE claim_id = 'CLM-88421'\n                      ^^^^^^^^^^^^^^^^^^^",
+      "output": "{\"error\": \"CatalogException: Catalog Error: Table with name claim_features does not exist!\\nDid you mean \\\"silver.claims\\\"?\\n\\nLINE 1: SELECT * FROM gold.claim_features WHERE claim_id = 'CLM-88421'\\n                      ^^^^^^^^^^^^^^^^^^^\"}"
+    },
+    {
+      "step": 12,
+      "tool": "define_term",
+      "args": {
+        "term": "Fraud Score"
+      },
+      "backend": "Catalog · glossary",
+      "ms": 7,
+      "masked": 0,
+      "error": null,
+      "output": "[{\"term\": \"Fraud Score\", \"owner\": \"Fraud Analytics\", \"definition\": \"Probability-like score in [0,1] from the fraud model, computed once per claim and versioned. 0.50 or above routes the claim to investigators.\", \"synonyms\": \"\"}]"
+    },
+    {
+      "step": 13,
+      "tool": "define_term",
+      "args": {
+        "term": "Linked Claims"
+      },
+      "backend": "Catalog · glossary",
+      "ms": 7,
+      "masked": 0,
+      "error": null,
+      "output": "[{\"term\": \"Linked Claims\", \"owner\": \"Fraud Analytics\", \"definition\": \"Claims that share a repair shop, contact phone, vehicle or person with another claim within 30 days. A pattern to investigate, not proof of fraud.\", \"synonyms\": \"\"}]"
+    },
+    {
+      "step": 14,
+      "tool": "submit_decision",
+      "args": {
+        "claim_id": "CLM-88421",
+        "decision": "hold_and_route_to_investigation",
+        "amount_inr": null,
+        "rationale": "Loss occurred 2026-10-12, before the zero-depreciation endorsement effective 2026-10-13 10:42; the policy terms in force at loss had zero-depreciation off and a ₹2,500 deductible. The claim was filed 2026-10-14, and this post-loss endorsement is a concrete coverage/fraud red flag requiring investigation; no fraud score or linked-claim result was available from the governed tools."
+      },
+      "backend": "Action gateway",
+      "ms": 0,
+      "masked": 0,
+      "error": null,
+      "output": "{\"claim_id\": \"CLM-88421\", \"decision\": \"hold_and_route_to_investigation\", \"action\": \"route_to_investigation\", \"amount_inr\": null, \"rationale\": \"Loss occurred 2026-10-12, before the zero-depreciation endorsement effective 2026-10-13 10:42; the policy terms in force at loss had zero-depreciation off and a ₹2,500 deductible. The claim was filed 2026-10-14, and this post-loss endorsement is a concrete coverage/fraud red flag requiring investigation; no fraud score or linked-claim result was available from the governed tools.\", \"allowed\": true, \"status\": \"done\", \"reason\": \"route_to_investigation recorded\"}"
+    }
+  ],
+  "usage": {
+    "requests": 6,
+    "input_tokens": 19418,
+    "output_tokens": 1945
+  },
+  "scorecard": [
+    {
+      "fault": "Policy date",
+      "layer": "A",
+      "without": "Today's policy",
+      "with": "As of the accident date",
+      "pass": true,
+      "detail": "zero-dep correctly treated as not in force on 12 Oct"
+    },
+    {
+      "fault": "\"Severity\"",
+      "layer": "B",
+      "without": "Three meanings",
+      "with": "One owned definition",
+      "pass": false,
+      "detail": "B2, from the surveyor severity_band in silver.claims; assessed loss ₹4,10,000."
+    },
+    {
+      "fault": "FIR and invoice",
+      "layer": "C",
+      "without": "Never readable",
+      "with": "Retrieved and cited",
+      "pass": false,
+      "detail": "documents only listed or classified"
+    },
+    {
+      "fault": "Claimant phone",
+      "layer": "D",
+      "without": "Nearly leaked",
+      "with": "Masked inside retrieval",
+      "pass": true,
+      "detail": "no other person's data reached the model unmasked"
+    },
+    {
+      "fault": "Linked claims",
+      "layer": "E",
+      "without": "Missed",
+      "with": "Surfaced through the graph",
+      "pass": false,
+      "detail": "0 of 5 linked claims found"
+    },
+    {
+      "fault": "Fraud score",
+      "layer": "F",
+      "without": "Never called",
+      "with": "Read from the store, versioned",
+      "pass": false,
+      "detail": "no fraud score used"
+    },
+    {
+      "fault": "The claim",
+      "layer": "outcome",
+      "without": "Near payout on a suspect claim",
+      "with": "Held and routed with evidence, a person decides",
+      "pass": false,
+      "detail": "held, but blind: no linked claims and no fraud score behind it"
+    }
+  ]
+}

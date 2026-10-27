@@ -1,0 +1,12 @@
+# Real-time endpoints. Registered in the knowledge graph as live views of entities that also live in the lakehouse.
+apis:
+  policy_status:
+    path: /api/source/policy-status/{policy_id}
+    system: Policy Admin
+    serves: Policy
+    description: Live status of a policy as it stands right now (current view only, no history).
+  fraud_score_live:
+    path: /api/source/fraud-score/{claim_id}
+    system: Fraud Engine
+    serves: Fraud Score
+    description: Recomputes a fraud score from raw tables on every call. Has no access to graph features.

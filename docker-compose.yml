@@ -1,0 +1,113 @@
+# Three containers. Everything else (Iceberg lakehouse, Dagster, the discovery plane,
+# the demo app) runs locally from the Python venv. OpenMetadata is opt-in:
+#   docker compose --profile catalog up -d   (needs ~4 GB more Docker memory)
+services:
+  postgres:
+    # The "before" world: the operational claims DB, policy admin system and CRM.
+    image: postgres:18.6-alpine
+    container_name: claims-postgres
+    ports: ["5440:5432"]
+    environment:
+      POSTGRES_DB: insurer_ops
+      POSTGRES_USER: ops
+      POSTGRES_PASSWORD: ops-pass
+    volumes: [pg-data:/var/lib/postgresql]   # Postgres 18 keeps a versioned directory under here
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ops -d insurer_ops"]
+      interval: 3s
+      retries: 20
+
+  neo4j:
+    # Enterprise knowledge graph: instance + identity + provenance + metadata + governance.
+    image: neo4j:2026.10.1-community
+    container_name: claims-neo4j
+    ports: ["7480:7474", "7690:7687"]
+    environment:
+      NEO4J_AUTH: neo4j/claims-graph
+      NEO4J_server_memory_heap_max__size: 768m
+      NEO4J_server_memory_pagecache_size: 256m
+      NEO4J_server_jvm_additional: "-XX:UseSVE=0"   # Apple M4 VMs expose SVE; the JDK crashes on it
+    volumes: [neo4j-data:/data]
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:7474 || exit 1"]
+      interval: 5s
+      retries: 30
+
+  qdrant:
+    # Vector index: document chunks with source attribution, and the discovery index.
+    image: qdrant/qdrant:v1.20.0
+    container_name: claims-qdrant
+    ports: ["6340:6333"]
+    volumes: [qdrant-data:/qdrant/storage]
+
+  # --- optional: OpenMetadata as the human-facing catalog (System of Understanding UI) ---
+  om-postgres:
+    profiles: [catalog]
+    image: postgres:18.6-alpine
+    container_name: claims-om-postgres
+    environment:
+      POSTGRES_DB: openmetadata_db
+      POSTGRES_USER: openmetadata_user
+      POSTGRES_PASSWORD: openmetadata_password
+    volumes: [om-pg-data:/var/lib/postgresql]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U openmetadata_user -d openmetadata_db"]
+      interval: 5s
+      retries: 20
+
+  om-search:
+    profiles: [catalog]
+    # Elasticsearch 9.3, as OpenMetadata 2.0.7's own quickstart pins, rather than OpenSearch: the OpenSearch 2.x image refuses to start in
+    # Colima/Lima virtual machines on Apple Silicon. UseSVE=0 avoids the JDK SIGILL on M4 chips.
+    image: docker.elastic.co/elasticsearch/elasticsearch:9.3.0
+    container_name: claims-om-search
+    environment:
+      discovery.type: single-node
+      xpack.security.enabled: "false"
+      ES_JAVA_OPTS: "-Xms768m -Xmx768m -XX:UseSVE=0"
+      CLI_JAVA_OPTS: "-XX:UseSVE=0"       # the launcher JVM; Elasticsearch ignores JAVA_TOOL_OPTIONS
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:9200/_cluster/health || exit 1"]
+      interval: 10s
+      retries: 30
+
+  om-migrate:
+    profiles: [catalog]
+    image: docker.getcollate.io/openmetadata/server:2.0.7
+    command: ["./bootstrap/openmetadata-ops.sh", "migrate"]
+    environment: &om-env
+      # Apple M4 exposes SVE/SME to Linux VMs and JDK 21+ crashes with SIGILL on it
+      JAVA_TOOL_OPTIONS: "-XX:UseSVE=0"
+      DB_DRIVER_CLASS: org.postgresql.Driver
+      DB_SCHEME: postgresql
+      DB_HOST: om-postgres
+      DB_PORT: "5432"
+      DB_USER: openmetadata_user
+      DB_USER_PASSWORD: openmetadata_password
+      OM_DATABASE: openmetadata_db
+      SEARCH_TYPE: elasticsearch
+      ELASTICSEARCH_HOST: om-search
+      ELASTICSEARCH_PORT: "9200"
+      ELASTICSEARCH_SCHEME: http
+      PIPELINE_SERVICE_CLIENT_ENABLED: "false"
+    depends_on:
+      om-postgres: {condition: service_healthy}
+      om-search: {condition: service_healthy}
+
+  openmetadata:
+    profiles: [catalog]
+    image: docker.getcollate.io/openmetadata/server:2.0.7
+    container_name: claims-openmetadata
+    ports: ["8585:8585"]
+    environment:
+      <<: *om-env
+      AUTHORIZER_ADMIN_PRINCIPALS: "[admin]"
+      AUTHENTICATION_PROVIDER: basic
+    depends_on:
+      om-migrate: {condition: service_completed_successfully}
+
+volumes:
+  pg-data:
+  neo4j-data:
+  qdrant-data:
+  om-pg-data:

@@ -1,0 +1,251 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI-Ready Claims · story</title>
+<link href="https://fonts.googleapis.com/css2?family=Mulish:wght@400..800&family=Zilla+Slab:wght@500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+/* Story slides for the demo video, in the deck's palette. One slide per URL hash; step(n) builds a diagram up. */
+:root { --indigo:#33357D; --night:#27235A; --deep:#1B1842; --violet:#4A4C92; --lilac:#C9CAE6; --mist:#E6E6F4;
+  --rust:#B4513F; --mustard:#E0AA55; --teal:#2F7F86; --cream:#F5F4F0; --card:#FEFCFA; --line:#DDD8CF; --ink:#434343; --muted:#6E6A66; }
+* { box-sizing: border-box; margin: 0; }
+html, body { height: 100%; background: var(--cream); color: var(--ink); font-family: Mulish, system-ui, sans-serif; overflow: hidden; }
+.slide { position: absolute; inset: 0; padding: 4.2vh 4.5vw; display: none; flex-direction: column; gap: 2.2vh; }
+.slide.on { display: flex; animation: in .45s ease; }
+@keyframes in { from { opacity: 0; } to { opacity: 1; } }
+.dark { background: var(--indigo); color: var(--card); }
+.eyebrow { font-size: 1.25vw; font-weight: 800; letter-spacing: .28vw; text-transform: uppercase; color: var(--rust); }
+.dark .eyebrow { color: var(--mustard); }
+h1 { font-family: 'Zilla Slab', Georgia, serif; font-size: 5.2vw; line-height: 1.05; font-weight: 700; color: var(--card); }
+h2 { font-family: 'Zilla Slab', Georgia, serif; font-size: 3vw; line-height: 1.1; font-weight: 600; color: var(--indigo); }
+.lead { font-size: 1.9vw; line-height: 1.45; color: var(--lilac); max-width: 70vw; }
+.spacer { flex: 1; }
+.chip { display: inline-flex; padding: .8vh 1.3vw; border-radius: 999px; font-weight: 800; font-size: 1.3vw; background: var(--night); color: var(--mustard); }
+svg.dia { flex: 1; width: 100%; min-height: 0; }
+
+/* primer */
+.journey { display: grid; grid-template-columns: repeat(5, 1fr); gap: 1.2vw; align-items: stretch; }
+.journey > div { background: var(--card); border: 2px solid var(--line); border-radius: 1.2vw; padding: 2.2vh 1.2vw; display: flex; flex-direction: column; gap: 1vh; opacity: .15; transition: opacity .5s, border-color .5s; }
+.journey > div.shown { opacity: 1; }
+.journey > div.now { border-color: var(--mustard); box-shadow: 0 0 0 .25vw var(--mustard); }
+.journey .em { font-size: 3vw; line-height: 1; }
+.journey h3 { font-family: 'Zilla Slab', Georgia, serif; font-size: 1.85vw; color: var(--indigo); }
+.journey p { font-size: 1.3vw; line-height: 1.35; color: var(--muted); }
+.journey .act { background: var(--indigo); border-color: var(--indigo); } .journey .act h3 { color: var(--card); } .journey .act p { color: var(--lilac); }
+.words { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.2vw; opacity: .15; transition: opacity .5s; }
+.words.shown { opacity: 1; }
+.words div { background: var(--mist); border-radius: 1vw; padding: 1.6vh 1.2vw; font-size: 1.35vw; line-height: 1.35; }
+.words b { display: block; color: var(--indigo); font-size: 1.45vw; margin-bottom: .4vh; }
+.prompt { background: var(--night); color: var(--card); border-radius: 1vw; padding: 1.8vh 1.6vw; font-family: 'JetBrains Mono', monospace; font-size: 1.4vw; line-height: 1.5; opacity: .15; transition: opacity .5s; }
+.prompt.shown { opacity: 1; }
+.prompt span { color: var(--mustard); font-family: Mulish, sans-serif; font-weight: 800; letter-spacing: .2vw; font-size: 1vw; display: block; margin-bottom: .5vh; }
+
+/* diagrams */
+.dia [data-step] { opacity: 0; transition: opacity .6s; }
+.dia [data-step].shown { opacity: 1; }
+.dia .box rect { fill: #FEFCFA; stroke: #DDD8CF; stroke-width: 2.5; }
+.dia .box.dest rect { fill: #FFFFFF; stroke: #33357D; stroke-width: 3; }
+.dia .box.dark rect { fill: #33357D; stroke: #33357D; }
+.dia .box.warn rect { fill: #FBEFEA; stroke: #B4513F; stroke-dasharray: 8 6; }
+.dia .box.frame rect { fill: none; stroke: #C9CAE6; stroke-width: 2.5; stroke-dasharray: 10 8; }
+.dia .now rect { stroke: #E0AA55 !important; stroke-width: 5 !important; }
+.dia .t { font: 800 25px Mulish, sans-serif; fill: #33357D; }
+.dia .box.dark .t { fill: #FEFCFA; }
+.dia .s { font: 500 18px Mulish, sans-serif; fill: #6E6A66; }
+.dia .m { font: 600 16px 'JetBrains Mono', monospace; fill: #33357D; }
+.dia .lane { font: 800 17px Mulish, sans-serif; fill: #B4513F; letter-spacing: 2px; text-transform: uppercase; }
+.dia .badge circle { fill: #33357D; } .dia .badge text { font: 800 15px Mulish, sans-serif; fill: #FEFCFA; }
+.dia path.flow { fill: none; stroke: #4A4C92; stroke-width: 3; stroke-dasharray: 7 9; animation: dash 1.1s linear infinite; }
+.dia path.flow.ext { stroke: #2F7F86; }
+.dia path.flow.bridge { stroke: #E0AA55; stroke-width: 3.5; }
+.dia .dot { fill: #E0AA55; }
+@keyframes dash { to { stroke-dashoffset: -32; } }
+.dia .gate circle { fill: #33357D; } .dia .gate path { stroke: #E0AA55; stroke-width: 4; fill: none; }
+.dia .chipbox rect { fill: #4A4C92; } .dia .chipbox text { font: 700 16px 'JetBrains Mono', monospace; fill: #FEFCFA; }
+.dia .rule rect { fill: #E3F1F2; } .dia .rule text { font: 800 17px Mulish, sans-serif; fill: #2F7F86; }
+
+.quote { font-family: 'Zilla Slab', Georgia, serif; font-size: 4.6vw; line-height: 1.12; font-weight: 700; color: var(--card); max-width: 80vw; }
+.steps { font-size: 1.9vw; font-weight: 800; color: var(--mustard); }
+</style>
+</head>
+<body>
+
+<section class="slide dark" id="title">
+  <span class="chip" style="align-self:flex-start">AI-Ready Enterprise Data · working demo</span>
+  <div class="spacer"></div>
+  <h1>One insurance claim.<br>One AI agent. Asked twice.</h1>
+  <p class="lead">First on the insurer's data as it is today, then on AI-ready data. Same model, same question.</p>
+  <div class="spacer"></div>
+</section>
+
+<section class="slide" id="primer">
+  <div class="eyebrow">Motor insurance in plain words</div>
+  <h2>What happens to a car-accident claim</h2>
+  <div class="journey" id="journey">
+    <div><span class="em">🚗</span><h3>An accident</h3><p>A car is damaged in a collision on 12 October.</p></div>
+    <div><span class="em">📝</span><h3>A claim is filed</h3><p>The owner asks the insurer for ₹4.2 lakh to repair it.</p></div>
+    <div><span class="em">📜</span><h3>Check the policy</h3><p>Was the car covered, and for what, on the day of the accident?</p></div>
+    <div><span class="em">📄</span><h3>Read the evidence</h3><p>The police report (FIR), the garage's invoice, the surveyor's report.</p></div>
+    <div class="act"><span class="em">⚖️</span><h3>Decide</h3><p>Pay quickly ("fast-track"), or send it to investigators.</p></div>
+  </div>
+  <div class="words" id="words">
+    <div><b>Zero-dep add-on</b>Extra cover that pays for new parts at full price. Only counts if it was bought before the accident.</div>
+    <div><b>Severity band B2</b>The surveyor's grade for the damage: B2 means major repair.</div>
+    <div><b>A fraud ring</b>Many claims that quietly share the same garage and the same contact phone.</div>
+  </div>
+  <div class="prompt" id="prompt"><span>The question we give the agent</span>Assess claim #CLM-88421, a ₹4.2L car-collision claim filed yesterday. Should we fast-track settlement, and at what amount? And flag anything suspicious.</div>
+</section>
+
+<section class="slide" id="flow">
+  <div class="eyebrow">Built for the demo · 1 of 3</div>
+  <h2>How the data flows into the lakehouse</h2>
+  <svg class="dia" id="d-flow" viewBox="0 0 1600 640" preserveAspectRatio="xMidYMid meet"></svg>
+</section>
+
+<section class="slide" id="fill">
+  <div class="eyebrow">Built for the demo · 2 of 3</div>
+  <h2>How the catalog, the documents and the graph get filled</h2>
+  <svg class="dia" id="d-fill" viewBox="0 0 1660 700" preserveAspectRatio="xMidYMid meet"></svg>
+</section>
+
+<section class="slide" id="plane">
+  <div class="eyebrow">Built for the demo · 3 of 3</div>
+  <h2>Where the agent connects: the discovery plane</h2>
+  <svg class="dia" id="d-plane" viewBox="0 0 1600 700" preserveAspectRatio="xMidYMid meet"></svg>
+</section>
+
+<section class="slide dark" id="closing">
+  <div class="spacer"></div>
+  <div class="quote">Before you make your AI smarter, make your data ready.</div>
+  <div class="steps">Organize · Describe · Retrieve · Govern · Connect · Materialize</div>
+  <div class="spacer"></div>
+</section>
+
+<script>
+// ------------------------------------------------------------------ tiny SVG builder
+const X = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;");
+// box(x, y, w, h, {title, sub: [lines], mono, logo: [[file, height, dx, aspect]], icon, badges, cls, step})
+function box(x, y, w, h, o = {}) {
+  const hasLogo = !!o.logo;
+  const tx = x + 22 + (o.icon ? 44 : 0);
+  const logo = hasLogo ? o.logo.map((l) => `<image href="/static/logos/${l[0]}.svg" x="${x + 22 + (l[2] || 0)}" y="${y + 18}" height="${l[1] || 34}" width="${(l[1] || 34) * (l[3] || 1)}"/>`).join("") : "";
+  const icon = o.icon ? (o.icon.endsWith(".svg") ? `<image href="/static/logos/${o.icon}" x="${x + 18}" y="${y + 18}" height="32" width="32"/>` : `<text x="${x + 18}" y="${y + 46}" style="font-size:28px">${o.icon}</text>`) : "";
+  const ty = y + (hasLogo ? 86 : 44);
+  const title = `<text class="t" x="${tx}" y="${ty}">${X(o.title || "")}</text>`;
+  const lines = (o.sub || []).map((l, i) => `<text class="s" x="${x + 22}" y="${ty + 30 + i * 25}">${X(l)}</text>`).join("");
+  const mono = o.mono ? `<text class="m" x="${x + 22}" y="${y + h - 22}">${X(o.mono)}</text>` : "";
+  const badges = (o.badges || []).map((b, i) => `<g class="badge"><circle cx="${x + w - 26 - i * 36}" cy="${y + 26}" r="15"/><text x="${x + w - 26 - i * 36}" y="${y + 31}" text-anchor="middle">${b}</text></g>`).join("");
+  return `<g class="box ${o.cls || ""}" ${o.step ? `data-step="${o.step}"` : ""}><rect x="${x}" y="${y}" width="${w}" height="${h}" rx="18"/>${logo}${icon}${title}${lines}${mono}${badges}</g>`;
+}
+function flow(d, step, o = {}) {
+  const n = o.dots ?? 2, dur = o.dur || 2.4;
+  const dots = Array.from({ length: n }, (_, i) => `<circle class="dot" r="6"><animateMotion dur="${dur}s" begin="-${((i + 0.5) * dur) / n}s" repeatCount="indefinite" path="${d}"/></circle>`).join("");
+  const label = o.label ? `<text class="s" x="${o.label[0]}" y="${o.label[1]}" text-anchor="${o.label[2] || "start"}" style="font-weight:800;fill:${o.cls === "bridge" ? "#A26A12" : "#4A4C92"}">${X(o.label[3])}</text>` : "";
+  return `<g data-step="${step}"><path class="flow ${o.cls || ""}" d="${d}"/>${dots}${label}</g>`;
+}
+const gate = (x, y, step) => `<g class="gate" data-step="${step}"><circle cx="${x}" cy="${y}" r="22"/><path d="M${x - 9} ${y} l6 7 l12 -14"/></g>`;
+function chips(x, y, items, step, cls = "chipbox", gap = 12) {
+  let cx = x;
+  return `<g data-step="${step}">` + items.map((t) => {
+    const w = t.length * (cls === "rule" ? 9.6 : 10.2) + 26;
+    const g = `<g class="${cls}"><rect x="${cx}" y="${y}" width="${w}" height="34" rx="17"/><text x="${cx + 13}" y="${y + 23}">${X(t)}</text></g>`;
+    cx += w + gap; return g;
+  }).join("") + `</g>`;
+}
+const lane = (x, y, t, step) => `<text class="lane" x="${x}" y="${y}" data-step="${step}">${X(t)}</text>`;
+
+// ------------------------------------------------------------------ diagram 1: the pipeline
+const SRC = [["Claims database", "postgresql.svg"], ["Policy system", "postgresql.svg"], ["CRM (customers)", "postgresql.svg"], ["Spreadsheet (CSV)", "📊"], ["Uploaded PDFs", "📄"]];
+document.getElementById("d-flow").innerHTML = [
+  lane(20, 24, "The insurer's systems", 1),
+  ...SRC.map(([t, ic], i) => box(20, 40 + i * 96, 280, 78, { title: t, icon: ic, step: 1 })),
+  box(330, 6, 900, 612, { cls: "frame", step: 2 }),
+  `<g data-step="2"><image href="/static/logos/dagster.svg" x="352" y="20" height="36" width="36"/><text class="t" x="398" y="48">Dagster runs every step, in order, and checks it</text></g>`,
+  ...SRC.map((_, i) => flow(`M300 ${79 + i * 96} C 335 ${79 + i * 96}, 340 300, 370 300`, 2, { dots: 1, dur: 2 })),
+  box(370, 100, 240, 390, { title: "Bronze", step: 2, sub: ["Raw copies of", "every source,", "stamped with", "source and time"], mono: "CLM 88421 · 14/10/26" }),
+  gate(640, 300, 3), flow("M610 300 L 668 300", 3, { dots: 1, dur: 1.2 }),
+  box(670, 100, 270, 390, { title: "Silver", step: 3, sub: ["One claim ID", "One person, not two", "Policy history,", "as of any date", "Documents owned", "and versioned"], mono: "CLM-88421 · 2026-10-14" }),
+  box(670, 510, 270, 96, { title: "Held at the gate", step: 3, cls: "warn", sub: ["2 claims, no policy number"] }),
+  gate(970, 300, 4), flow("M940 300 L 998 300", 4, { dots: 1, dur: 1.2 }),
+  box(1000, 100, 210, 390, { title: "Gold", step: 4, sub: ["Features for", "the fraud model", "Fraud score", "Settlement", "range"], mono: "fraud_score 0.82" }),
+  flow("M1210 300 L 1290 300", 5, { label: [1250, 284, "middle", "tables"] }),
+  box(1290, 160, 300, 280, { title: "The lakehouse", step: 5, cls: "dest", badges: ["F", "A"], logo: [["iceberg", 38, 0, 3.2], ["duckdb", 38, 140, 1]],
+    sub: ["Apache Iceberg tables,", "queried with DuckDB:", "the System of Record"] }),
+].join("");
+
+// ------------------------------------------------------------------ diagram 2: catalog, documents, graph
+document.getElementById("d-fill").innerHTML = [
+  lane(20, 28, "Meaning", 1),
+  box(20, 44, 330, 156, { title: "Written by the teams", step: 1, sub: ["Glossary, column meanings,", "owners, privacy rules,", "kept as files in Git"] }),
+  box(380, 44, 300, 156, { title: "From the lakehouse", step: 1, sub: ["Every table and column,", "and where it came from"] }),
+  box(710, 44, 400, 156, { title: "Drafted by an AI model", step: 1, sub: ["Meanings nobody wrote yet,", "flagged \"needs review\";", "personal data spotted"] }),
+  // three sources of meaning run along one line under their boxes into the catalog
+  flow("M185 200 L 185 214 L 1210 214 L 1240 196", 1, { dots: 1, dur: 3.2 }),
+  flow("M530 200 L 530 214 L 1210 214 L 1240 196", 1, { dots: 1, dur: 2.6 }),
+  flow("M910 200 L 910 214 L 1210 214 L 1240 196", 1, { dots: 1, dur: 1.8 }),
+  box(1240, 28, 350, 196, { title: "OpenMetadata", step: 1, cls: "dest", badges: ["D", "B"], logo: [["openmetadata", 40, 0, 2.45]], sub: ["The data catalog: what each", "column means, who owns it,", "what is sensitive"] }),
+
+  lane(20, 266, "Documents", 2),
+  box(20, 280, 250, 152, { title: "PDFs", step: 2, sub: ["Police reports,", "invoices, surveys"] }),
+  flow("M270 356 L 310 356", 2, { dots: 1, dur: 1 }),
+  box(310, 280, 250, 152, { title: "Read", step: 2, sub: ["Text, and labelled", "fields like garage", "and phone"] }),
+  flow("M560 356 L 600 356", 2, { dots: 1, dur: 1 }),
+  box(600, 280, 250, 152, { title: "Split", step: 2, sub: ["By section,", "keeping the page"] }),
+  flow("M850 356 L 890 356", 2, { dots: 1, dur: 1 }),
+  box(890, 280, 250, 152, { title: "Embed", step: 2, sub: ["Turn each passage", "into numbers that", "capture meaning"] }),
+  flow("M1140 356 L 1240 356", 2, { dots: 1, dur: 1.2 }),
+  box(1240, 268, 350, 176, { title: "Qdrant", step: 2, cls: "dest", badges: ["C"], logo: [["qdrant", 40, 0, 3.6]], sub: ["Vector database: finds", "passages by meaning, cites", "document and page"] }),
+
+  lane(20, 494, "Connections", 3),
+  box(20, 508, 300, 176, { title: "Mentions", step: 3, sub: ["Every place a garage,", "phone, person or claim", "appears: in tables and", "on document pages"] }),
+  flow("M435 432 L 435 470 L 170 470 L 170 508", 3, { dots: 1, dur: 2, cls: "ext" }),
+  flow("M320 596 L 360 596", 3, { dots: 1, dur: 1 }),
+  box(360, 508, 420, 176, { title: "Resolve", step: 3, sub: ["4 phone formats → 1 number", "5 garage spellings → 1 garage", "2 customer records → 1 person"] }),
+  flow("M780 596 L 820 596", 3, { dots: 1, dur: 1 }),
+  box(820, 508, 320, 176, { title: "Link, with evidence", step: 3, sub: ["Which page said so,", "which rule matched,", "how sure it is"] }),
+  flow("M1140 596 L 1240 596", 3, { dots: 1, dur: 1.2 }),
+  box(1240, 498, 350, 196, { title: "Neo4j", step: 3, cls: "dest", badges: ["E"], logo: [["neo4j", 40, 0, 1]], sub: ["Graph database: claims,", "people, phones, garages", "and how they connect"] }),
+  flow("M1590 596 C 1650 596, 1650 126, 1590 126", 4, { cls: "bridge", dots: 2, dur: 2.6, label: [1590, 474, "end", "↑ the graph is linked to the catalog"] }),
+].join("");
+
+// ------------------------------------------------------------------ diagram 3: the discovery plane
+document.getElementById("d-plane").innerHTML = [
+  box(40, 480, 360, 200, { title: "System of Record", step: 1, badges: ["F", "A"], logo: [["iceberg", 34, 0, 3.2], ["duckdb", 34, 128, 1]], sub: ["Lakehouse tables,", "policy history, signals"] }),
+  box(430, 480, 360, 200, { title: "System of Understanding", step: 1, badges: ["D", "B"], logo: [["openmetadata", 34, 0, 2.45]], sub: ["Catalog, glossary,", "privacy rules"] }),
+  box(820, 480, 360, 200, { title: "System of Discovery", step: 1, badges: ["C"], logo: [["qdrant", 34, 0, 3.6]], sub: ["Documents, found", "by meaning"] }),
+  box(1210, 480, 350, 200, { title: "System of Discovery", step: 1, badges: ["E"], logo: [["neo4j", 34, 0, 1]], sub: ["Knowledge graph:", "who and what connects"] }),
+  box(40, 190, 1520, 200, { title: "Unified discovery plane: one governed gateway for every agent (also over MCP)", step: 2, cls: "dark" }),
+  `<image data-step="2" href="/static/logos/modelcontextprotocol.svg" x="1500" y="206" height="34" width="34" style="filter:invert(1)"/>`,
+  chips(64, 262, ["policy_terms", "query_lakehouse", "search_catalog", "define_term", "search_documents", "investigate_links", "get_signals", "submit_decision"], 2),
+  chips(64, 330, ["masks personal data by role", "records every call", "payments need a person"], 4, "rule", 16),
+  ...[220, 610, 1000, 1385].map((x) => flow(`M${x} 390 L ${x} 480`, 3, { dots: 1, dur: 1.2 })),
+  box(560, 20, 480, 124, { title: "Claims agent", step: 3, cls: "dest", sub: ["Any model: GPT or Claude.", "It only ever talks to the plane."] }),
+  flow("M800 144 L 800 190", 3, { dots: 1, dur: 1 }),
+].join("");
+
+// ------------------------------------------------------------------ stepping
+// step(n): show everything up to step n and highlight step n; step(0) shows everything
+window.step = (n) => {
+  const s = document.querySelector(".slide.on");
+  s.querySelectorAll("[data-step]").forEach((e) => {
+    const k = +e.dataset.step;
+    e.classList.toggle("shown", n === 0 || k <= n);
+    e.classList.toggle("now", n !== 0 && k === n && e.classList.contains("box") && !e.classList.contains("frame"));
+  });
+  if (s.id === "primer") {   // journey cards one by one, then the words, then the prompt
+    [...document.querySelectorAll("#journey > div")].forEach((c, i) => { c.classList.toggle("shown", n === 0 || i < n); c.classList.toggle("now", i === n - 1); });
+    document.getElementById("words").classList.toggle("shown", n === 0 || n >= 6);
+    document.getElementById("prompt").classList.toggle("shown", n === 0 || n >= 7);
+  }
+};
+function show() {
+  const id = location.hash.slice(1) || "title";
+  document.querySelectorAll(".slide").forEach((s) => s.classList.toggle("on", s.id === id));
+  step(new URLSearchParams(location.search).get("all") ? 0 : 1);
+}
+addEventListener("hashchange", show);
+show();
+</script>
+</body>
+</html>
